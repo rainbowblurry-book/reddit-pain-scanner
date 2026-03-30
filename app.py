@@ -32,6 +32,16 @@ st.markdown("""
         -webkit-font-smoothing: antialiased;
     }
 
+    /* Widen center column */
+    [data-testid="block-container"] {
+        max-width: 950px !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+    [data-testid="stVerticalBlock"] {
+        max-width: 100% !important;
+    }
+
     /* Input */
     .stTextInput > div > div > input {
         border-radius: 8px !important;
@@ -77,6 +87,19 @@ st.markdown("""
         color: #111827 !important;
     }
 
+    /* Example topic buttons */
+    .stButton > button[kind="tertiary"],
+    div[data-testid="stButton"] button:not([kind="primary"]):not([kind="secondary"]) {
+        background-color: #F9FAFB !important;
+        color: #374151 !important;
+        border-radius: 999px !important;
+        border: 1px solid #E5E7EB !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        padding: 0.4rem 0.75rem !important;
+        transition: all 0.15s ease !important;
+    }
+
     /* Download button */
     .stDownloadButton > button {
         background-color: #FFFFFF !important;
@@ -100,7 +123,10 @@ st.markdown("""
         margin-bottom: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
     }
-    .pain-card.top-pick { border: 2px solid #111827; }
+    .pain-card.top-pick {
+        border: 2px solid #111827;
+        background-color: #FDFDFD;
+    }
     .pain-card.rank-2 { opacity: 0.97; }
     .pain-card.rank-3 { opacity: 0.94; }
     .pain-card.rank-4 { opacity: 0.91; }
@@ -134,7 +160,7 @@ st.markdown("""
         border-left: 4px solid #111827;
     }
     .app-solution-title {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         font-weight: 700;
@@ -198,17 +224,6 @@ st.markdown("""
         margin-top: 4rem;
         padding-bottom: 2rem;
     }
-    /* Widen center column from Streamlit default ~730px to 950px */
-[data-testid="block-container"] {
-    max-width: 950px !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
-}
-
-/* Prevent Streamlit's inner content wrapper from fighting it */
-[data-testid="stVerticalBlock"] {
-    max-width: 100% !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -220,6 +235,7 @@ defaults = {
     "last_keyword": "",
     "last_scan_time": 0,
     "post_count": 0,
+    "prefill_keyword": "",
 }
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -233,7 +249,6 @@ COOLDOWN_SECONDS = 30
 # ============================================================
 def fetch_reddit_posts(keyword, limit=40):
     headers = {"User-Agent": "PainRadar/2.0 (research tool)"}
-    # relevance + year gives richer signal than new + month
     url = f"https://www.reddit.com/search.rss?q={keyword}&type=link&sort=relevance&limit={limit}&t=year"
     try:
         response = requests.get(url, headers=headers, timeout=10)
@@ -293,13 +308,13 @@ Posts:
                     "items": {
                         "type": "OBJECT",
                         "properties": {
-                            "pain_point":       {"type": "STRING", "description": "Short name (5-8 words)"},
-                            "description":      {"type": "STRING", "description": "One sentence explaining the problem"},
-                            "demand_score":     {"type": "INTEGER", "description": "1 to 10"},
-                            "difficulty_score": {"type": "INTEGER", "description": "1 to 10"},
-                            "opportunity_score":{"type": "INTEGER", "description": "1 to 10"},
-                            "app_idea":         {"type": "STRING", "description": "One sentence describing the missing tool"},
-                            "evidence":         {"type": "STRING", "description": "Close paraphrase or direct quote grounded in the posts above"}
+                            "pain_point":        {"type": "STRING", "description": "Short name (5-8 words)"},
+                            "description":       {"type": "STRING", "description": "One sentence explaining the problem"},
+                            "demand_score":      {"type": "INTEGER", "description": "1 to 10"},
+                            "difficulty_score":  {"type": "INTEGER", "description": "1 to 10"},
+                            "opportunity_score": {"type": "INTEGER", "description": "1 to 10"},
+                            "app_idea":          {"type": "STRING", "description": "One sentence describing the missing tool"},
+                            "evidence":          {"type": "STRING", "description": "Close paraphrase or direct quote grounded in the posts above"}
                         },
                         "required": ["pain_point", "description", "demand_score",
                                      "difficulty_score", "opportunity_score", "app_idea", "evidence"]
@@ -320,6 +335,19 @@ def pill_class(score, invert=False):
         return "pill-low" if score >= 8 else ("pill-med" if score >= 5 else "pill-high")
     return "pill-high" if score >= 8 else ("pill-med" if score >= 5 else "pill-low")
 
+def render_score_cell(score, invert=False):
+    cls = pill_class(score, invert=invert)
+    colors = {
+        "pill-high": ("#DCFCE7", "#166534"),
+        "pill-med":  ("#FEF9C3", "#854D0E"),
+        "pill-low":  ("#FEE2E2", "#991B1B"),
+    }
+    bg, fg = colors[cls]
+    return (
+        f'<span style="background:{bg}; color:{fg}; padding:0.2rem 0.65rem; '
+        f'border-radius:999px; font-size:0.8rem; font-weight:700;">{score}/10</span>'
+    )
+
 RANK_CLASSES = ["", "rank-2", "rank-3", "rank-4", "rank-5"]
 
 # ============================================================
@@ -327,7 +355,8 @@ RANK_CLASSES = ["", "rank-2", "rank-3", "rank-4", "rank-5"]
 # ============================================================
 st.markdown("""
 <div style="text-align:center; margin-top:3rem; margin-bottom:2rem;">
-    <h1 style="font-size:2.5rem; font-weight:800; letter-spacing:-0.025em; margin-bottom:0.5rem; color:#111827;">
+    <h1 style="font-size:2.5rem; font-weight:800; letter-spacing:-0.025em;
+               margin-bottom:0.5rem; color:#111827;">
         Pain Radar
     </h1>
     <p style="color:#6B7280; font-size:1.1rem; max-width:500px; margin:0 auto;">
@@ -339,9 +368,8 @@ st.markdown("""
 # ============================================================
 # 6. SEARCH BAR
 # ============================================================
+prefill = st.session_state.pop("prefill_keyword", "")
 col1, col2 = st.columns([3, 1])
-with col1:
-    prefill = st.session_state.pop("prefill_keyword", "")
 with col1:
     keyword = st.text_input(
         "keyword",
@@ -352,18 +380,22 @@ with col1:
 with col2:
     scan_clicked = st.button("Scan Reddit", type="primary", use_container_width=True)
 
-if not API_KEY:
-    st.warning("⚠️ No hosted API key found. Add GEMINI_API_KEY to your Streamlit secrets.")
-# ---- ONBOARDING BLOCK (only shown before first scan) ----
+# ============================================================
+# 7. ONBOARDING BLOCK (only before first scan)
+# ============================================================
 if not st.session_state.results:
 
-    # How it works strip
     st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+
+    # How it works
     c1, c2, c3 = st.columns(3, gap="medium")
     steps = [
-        ("🔍", "Enter any topic",      "A niche, industry, or problem space — anything people complain about online."),
-        ("📡", "We scan Reddit",        "40 relevant posts from the past year are fetched and stripped of noise."),
-        ("💡", "Gemini finds the gaps", "Pain points ranked by real demand, build difficulty, and opportunity score."),
+        ("🔍", "Enter any topic",
+         "A niche, industry, or problem space — anything people complain about online."),
+        ("📡", "We scan Reddit",
+         "40 relevant posts from the past year are fetched and stripped of noise."),
+        ("💡", "Gemini finds the gaps",
+         "Pain points ranked by real demand, build difficulty, and opportunity score."),
     ]
     for col, (icon, title, desc) in zip([c1, c2, c3], steps):
         with col:
@@ -372,12 +404,14 @@ if not st.session_state.results:
             border:1px solid #E5E7EB; border-radius:12px;
             box-shadow:0 1px 3px rgba(0,0,0,0.04);">
     <div style="font-size:1.6rem; margin-bottom:0.6rem;">{icon}</div>
-    <p style="font-weight:700; color:#111827; margin:0 0 0.35rem 0; font-size:0.95rem;">{title}</p>
-    <p style="color:#6B7280; font-size:0.82rem; margin:0; line-height:1.5;">{desc}</p>
+    <p style="font-weight:700; color:#111827; margin:0 0 0.35rem 0;
+              font-size:0.95rem;">{title}</p>
+    <p style="color:#6B7280; font-size:0.82rem; margin:0;
+              line-height:1.5;">{desc}</p>
 </div>
 """, unsafe_allow_html=True)
 
-    # Example searches
+    # Example topics
     st.markdown("""
 <p style="text-align:center; color:#9CA3AF; font-size:0.82rem;
           margin-top:2rem; margin-bottom:0.75rem; letter-spacing:0.02em;">
@@ -397,8 +431,15 @@ if not st.session_state.results:
                 st.rerun()
 
     st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+
 # ============================================================
-# 7. RATE LIMIT + EXECUTION
+# 8. API KEY WARNING
+# ============================================================
+if not API_KEY:
+    st.warning("⚠️ No hosted API key found. Add GEMINI_API_KEY to your Streamlit secrets.")
+
+# ============================================================
+# 9. RATE LIMIT + EXECUTION
 # ============================================================
 if scan_clicked and keyword and API_KEY:
     elapsed = time.time() - st.session_state.last_scan_time
@@ -411,87 +452,79 @@ if scan_clicked and keyword and API_KEY:
             posts = fetch_reddit_posts(keyword)
             if posts:
                 results = analyse_pain_points(keyword, posts, API_KEY)
-                st.session_state.results      = sorted(results, key=lambda x: x.get("opportunity_score", 0), reverse=True)
-                st.session_state.last_keyword = keyword
-                st.session_state.last_scan_time = time.time()
-                st.session_state.post_count   = len(posts)
+                st.session_state.results         = sorted(
+                    results, key=lambda x: x.get("opportunity_score", 0), reverse=True
+                )
+                st.session_state.last_keyword    = keyword
+                st.session_state.last_scan_time  = time.time()
+                st.session_state.post_count      = len(posts)
 
 # ============================================================
-# 8. RESULTS
+# 10. RESULTS
 # ============================================================
 if st.session_state.results:
-    results      = st.session_state.results
-    kw           = st.session_state.last_keyword
-    post_count   = st.session_state.post_count
+    results    = st.session_state.results
+    kw         = st.session_state.last_keyword
+    post_count = st.session_state.post_count
 
-    # Header
+    # --- Header row ---
     st.markdown(f"""
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2rem; margin-bottom:1rem;">
-        <p style="color:#6B7280; font-weight:600; font-size:1.05rem; margin:0;">
-            Top opportunities for '<strong style="color:#111827;">{kw}</strong>'
-        </p>
-        <p style="color:#9CA3AF; font-size:0.82rem; margin:0;">
-            {post_count} posts · AI-estimated scores
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+<div style="display:flex; justify-content:space-between; align-items:center;
+            margin-top:2rem; margin-bottom:1rem;">
+    <p style="color:#6B7280; font-weight:600; font-size:1.05rem; margin:0;">
+        Top opportunities for '<strong style="color:#111827;">{kw}</strong>'
+    </p>
+    <p style="color:#9CA3AF; font-size:0.82rem; margin:0;">
+        {post_count} posts · AI-estimated scores
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
-    # Summary table
+    # --- Premium summary table ---
     summary = [
         {
             "Rank":        f"#{i+1}",
             "Pain Point":  r["pain_point"],
-            "Demand":      f"{r['demand_score']}/10",
-            "Difficulty":  f"{r['difficulty_score']}/10",
-            "Opportunity": f"{r['opportunity_score']}/10",
+            "Demand":      r["demand_score"],
+            "Difficulty":  r["difficulty_score"],
+            "Opportunity": r["opportunity_score"],
         }
         for i, r in enumerate(results)
     ]
-   def render_score_cell(score, invert=False):
-    cls = pill_class(score, invert=invert)
-    colors = {
-        "pill-high": ("#DCFCE7", "#166534"),
-        "pill-med":  ("#FEF9C3", "#854D0E"),
-        "pill-low":  ("#FEE2E2", "#991B1B"),
-    }
-    bg, fg = colors[cls]
-    return f'<span style="background:{bg}; color:{fg}; padding:0.2rem 0.65rem; border-radius:999px; font-size:0.8rem; font-weight:700;">{score}/10</span>'
 
-rows_html = ""
-for s in summary:
-    demand_val     = int(s["Demand"].replace("/10",""))
-    diff_val       = int(s["Difficulty"].replace("/10",""))
-    opp_val        = int(s["Opportunity"].replace("/10",""))
-    is_top         = s["Rank"] == "#1"
-    row_bg         = "#FAFFF9" if is_top else "#FFFFFF"
-    rank_style     = "font-weight:800; color:#111827;" if is_top else "font-weight:500; color:#9CA3AF;"
+    rows_html = ""
+    for s in summary:
+        is_top   = s["Rank"] == "#1"
+        row_bg   = "#FAFFF9" if is_top else "#FFFFFF"
+        rank_fw  = "font-weight:800; color:#111827;" if is_top else "font-weight:500; color:#9CA3AF;"
+        title_fw = "700" if is_top else "400"
 
-    rows_html += f"""
-    <tr style="background:{row_bg}; border-bottom:1px solid #F3F4F6; transition:background 0.15s ease;">
-        <td style="padding:0.75rem 1rem; {rank_style} font-size:0.875rem; white-space:nowrap;">{s["Rank"]}</td>
-        <td style="padding:0.75rem 1rem; font-weight:{'700' if is_top else '400'}; color:#111827; font-size:0.9rem;">{s["Pain Point"]}</td>
-        <td style="padding:0.75rem 1rem; text-align:center;">{render_score_cell(demand_val)}</td>
-        <td style="padding:0.75rem 1rem; text-align:center;">{render_score_cell(diff_val, invert=True)}</td>
-        <td style="padding:0.75rem 1rem; text-align:center;">{render_score_cell(opp_val)}</td>
-    </tr>"""
+        rows_html += f"""
+<tr style="background:{row_bg}; border-bottom:1px solid #F3F4F6;">
+    <td style="padding:0.75rem 1rem; {rank_fw} font-size:0.875rem; white-space:nowrap;">{s["Rank"]}</td>
+    <td style="padding:0.75rem 1rem; font-weight:{title_fw}; color:#111827; font-size:0.9rem;">{s["Pain Point"]}</td>
+    <td style="padding:0.75rem 1rem; text-align:center;">{render_score_cell(s["Demand"])}</td>
+    <td style="padding:0.75rem 1rem; text-align:center;">{render_score_cell(s["Difficulty"], invert=True)}</td>
+    <td style="padding:0.75rem 1rem; text-align:center;">{render_score_cell(s["Opportunity"])}</td>
+</tr>"""
 
-st.markdown(f"""
+    st.markdown(f"""
 <div style="border:1px solid #E5E7EB; border-radius:12px; overflow:hidden;
             background:#FFFFFF; margin-bottom:1.25rem;
             box-shadow:0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);">
   <table style="width:100%; border-collapse:collapse;">
     <thead>
       <tr style="background:#F9FAFB; border-bottom:2px solid #E5E7EB;">
-        <th style="padding:0.65rem 1rem; text-align:left; font-size:0.72rem;
-                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Rank</th>
-        <th style="padding:0.65rem 1rem; text-align:left; font-size:0.72rem;
-                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Pain Point</th>
-        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem;
-                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Demand</th>
-        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem;
-                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Difficulty</th>
-        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem;
-                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Opportunity ↓</th>
+        <th style="padding:0.65rem 1rem; text-align:left; font-size:0.72rem; color:#6B7280;
+                   text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Rank</th>
+        <th style="padding:0.65rem 1rem; text-align:left; font-size:0.72rem; color:#6B7280;
+                   text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Pain Point</th>
+        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem; color:#6B7280;
+                   text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Demand</th>
+        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem; color:#6B7280;
+                   text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Difficulty</th>
+        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem; color:#6B7280;
+                   text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Opportunity ↓</th>
       </tr>
     </thead>
     <tbody>{rows_html}</tbody>
@@ -499,7 +532,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-    # CSV download
+    # --- CSV download ---
     df  = pd.DataFrame(results)
     csv = df.to_csv(index=False)
     st.download_button(
@@ -511,17 +544,18 @@ st.markdown(f"""
 
     st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 
-    # Cards
+    # --- Pain point cards ---
     for i, item in enumerate(results):
-        is_top     = i == 0
-        rank_cls   = RANK_CLASSES[min(i, 4)]
-        card_cls   = "pain-card top-pick" if is_top else f"pain-card {rank_cls}"
-        badge      = "✨ TOP OPPORTUNITY" if is_top else f"#{i+1}"
-        title_cls  = f"card-title {rank_cls}".strip()
+        is_top    = i == 0
+        rank_cls  = RANK_CLASSES[min(i, 4)]
+        card_cls  = "pain-card top-pick" if is_top else f"pain-card {rank_cls}"
+        badge     = "✨ TOP OPPORTUNITY" if is_top else f"#{i+1}"
+        title_cls = f"card-title {rank_cls}".strip()
 
         st.markdown(f"""
 <div class="{card_cls}">
-<p style="font-size:0.8rem; font-weight:700; color:#9CA3AF; margin-bottom:0.5rem; letter-spacing:0.05em;">{badge}</p>
+<p style="font-size:0.8rem; font-weight:700; color:#9CA3AF; margin-bottom:0.5rem;
+          letter-spacing:0.05em;">{badge}</p>
 <h3 class="{title_cls}">{item['pain_point']}</h3>
 <p class="card-desc">{item['description']}</p>
 <div class="metric-container">
@@ -538,8 +572,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-    # Bottom new-search button
-    st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
+    # --- Bottom new search ---
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
     _, mid, _ = st.columns([1, 2, 1])
     with mid:
         if st.button("↑ New Search", type="secondary", use_container_width=True):
@@ -547,11 +581,13 @@ st.markdown(f"""
             st.rerun()
 
 # ============================================================
-# 9. FOOTER
+# 11. FOOTER
 # ============================================================
 st.markdown("""
 <div class="subtle-footer">
     Built by BlurryRainbow · Powered by Gemini<br>
-    <span style="opacity:0.6;">Scores are AI estimates based on Reddit post analysis — not statistically validated</span>
+    <span style="opacity:0.6;">
+        Scores are AI estimates based on Reddit post analysis — not statistically validated
+    </span>
 </div>
 """, unsafe_allow_html=True)

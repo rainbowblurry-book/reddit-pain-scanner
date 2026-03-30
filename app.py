@@ -198,6 +198,17 @@ st.markdown("""
         margin-top: 4rem;
         padding-bottom: 2rem;
     }
+    /* Widen center column from Streamlit default ~730px to 950px */
+[data-testid="block-container"] {
+    max-width: 950px !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+}
+
+/* Prevent Streamlit's inner content wrapper from fighting it */
+[data-testid="stVerticalBlock"] {
+    max-width: 100% !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -330,8 +341,11 @@ st.markdown("""
 # ============================================================
 col1, col2 = st.columns([3, 1])
 with col1:
+    prefill = st.session_state.pop("prefill_keyword", "")
+with col1:
     keyword = st.text_input(
         "keyword",
+        value=prefill,
         placeholder="e.g. sourdough, marathon training, AWS...",
         label_visibility="collapsed"
     )
@@ -340,7 +354,49 @@ with col2:
 
 if not API_KEY:
     st.warning("⚠️ No hosted API key found. Add GEMINI_API_KEY to your Streamlit secrets.")
+# ---- ONBOARDING BLOCK (only shown before first scan) ----
+if not st.session_state.results:
 
+    # How it works strip
+    st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3, gap="medium")
+    steps = [
+        ("🔍", "Enter any topic",      "A niche, industry, or problem space — anything people complain about online."),
+        ("📡", "We scan Reddit",        "40 relevant posts from the past year are fetched and stripped of noise."),
+        ("💡", "Gemini finds the gaps", "Pain points ranked by real demand, build difficulty, and opportunity score."),
+    ]
+    for col, (icon, title, desc) in zip([c1, c2, c3], steps):
+        with col:
+            st.markdown(f"""
+<div style="text-align:center; padding:1.5rem 1.25rem; background:#FFFFFF;
+            border:1px solid #E5E7EB; border-radius:12px;
+            box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+    <div style="font-size:1.6rem; margin-bottom:0.6rem;">{icon}</div>
+    <p style="font-weight:700; color:#111827; margin:0 0 0.35rem 0; font-size:0.95rem;">{title}</p>
+    <p style="color:#6B7280; font-size:0.82rem; margin:0; line-height:1.5;">{desc}</p>
+</div>
+""", unsafe_allow_html=True)
+
+    # Example searches
+    st.markdown("""
+<p style="text-align:center; color:#9CA3AF; font-size:0.82rem;
+          margin-top:2rem; margin-bottom:0.75rem; letter-spacing:0.02em;">
+    — or try one of these —
+</p>
+""", unsafe_allow_html=True)
+
+    examples = [
+        "sourdough baking", "marathon training", "remote work",
+        "language learning", "sleep tracking",  "personal finance",
+    ]
+    ex_cols = st.columns(len(examples))
+    for col, ex in zip(ex_cols, examples):
+        with col:
+            if st.button(ex, use_container_width=True, key=f"ex_{ex}"):
+                st.session_state["prefill_keyword"] = ex
+                st.rerun()
+
+    st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
 # ============================================================
 # 7. RATE LIMIT + EXECUTION
 # ============================================================
@@ -391,7 +447,57 @@ if st.session_state.results:
         }
         for i, r in enumerate(results)
     ]
-    st.dataframe(summary, use_container_width=True, hide_index=True)
+   def render_score_cell(score, invert=False):
+    cls = pill_class(score, invert=invert)
+    colors = {
+        "pill-high": ("#DCFCE7", "#166534"),
+        "pill-med":  ("#FEF9C3", "#854D0E"),
+        "pill-low":  ("#FEE2E2", "#991B1B"),
+    }
+    bg, fg = colors[cls]
+    return f'<span style="background:{bg}; color:{fg}; padding:0.2rem 0.65rem; border-radius:999px; font-size:0.8rem; font-weight:700;">{score}/10</span>'
+
+rows_html = ""
+for s in summary:
+    demand_val     = int(s["Demand"].replace("/10",""))
+    diff_val       = int(s["Difficulty"].replace("/10",""))
+    opp_val        = int(s["Opportunity"].replace("/10",""))
+    is_top         = s["Rank"] == "#1"
+    row_bg         = "#FAFFF9" if is_top else "#FFFFFF"
+    rank_style     = "font-weight:800; color:#111827;" if is_top else "font-weight:500; color:#9CA3AF;"
+
+    rows_html += f"""
+    <tr style="background:{row_bg}; border-bottom:1px solid #F3F4F6; transition:background 0.15s ease;">
+        <td style="padding:0.75rem 1rem; {rank_style} font-size:0.875rem; white-space:nowrap;">{s["Rank"]}</td>
+        <td style="padding:0.75rem 1rem; font-weight:{'700' if is_top else '400'}; color:#111827; font-size:0.9rem;">{s["Pain Point"]}</td>
+        <td style="padding:0.75rem 1rem; text-align:center;">{render_score_cell(demand_val)}</td>
+        <td style="padding:0.75rem 1rem; text-align:center;">{render_score_cell(diff_val, invert=True)}</td>
+        <td style="padding:0.75rem 1rem; text-align:center;">{render_score_cell(opp_val)}</td>
+    </tr>"""
+
+st.markdown(f"""
+<div style="border:1px solid #E5E7EB; border-radius:12px; overflow:hidden;
+            background:#FFFFFF; margin-bottom:1.25rem;
+            box-shadow:0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);">
+  <table style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr style="background:#F9FAFB; border-bottom:2px solid #E5E7EB;">
+        <th style="padding:0.65rem 1rem; text-align:left; font-size:0.72rem;
+                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Rank</th>
+        <th style="padding:0.65rem 1rem; text-align:left; font-size:0.72rem;
+                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Pain Point</th>
+        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem;
+                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Demand</th>
+        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem;
+                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Difficulty</th>
+        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem;
+                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Opportunity ↓</th>
+      </tr>
+    </thead>
+    <tbody>{rows_html}</tbody>
+  </table>
+</div>
+""", unsafe_allow_html=True)
 
     # CSV download
     df  = pd.DataFrame(results)

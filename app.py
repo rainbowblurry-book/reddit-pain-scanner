@@ -370,15 +370,20 @@ st.divider()
 # API key input
 with st.sidebar:
     st.markdown("### Settings")
-    api_key_input = st.text_input(
-        "Gemini API Key",
-        type="password",
-        placeholder="Paste your Gemini API key here",
-        help="Get a free key at aistudio.google.com"
-    )
-    st.caption(
-        "Your key is never stored. It lives only in this session."
-    )
+    hosted_key = st.secrets.get("GEMINI_API_KEY", "")
+    if hosted_key:
+        api_key_input = hosted_key
+        st.caption("Running on hosted API key.")
+    else:
+        api_key_input = st.text_input(
+            "Gemini API Key",
+            type="password",
+            placeholder="Paste your Gemini API key here",
+            help="Get a free key at aistudio.google.com"
+        )
+        st.caption(
+            "Your key is never stored. It lives only in this session."
+        )
     st.divider()
     if st.session_state.history:
         st.markdown("### Scan history")

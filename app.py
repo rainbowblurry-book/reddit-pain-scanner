@@ -4,47 +4,42 @@ import xml.etree.ElementTree as ET
 import json
 import time
 import re
+import pandas as pd
 from google import genai
 from google.genai import types
 
 # ============================================================
-# 1. PAGE CONFIG & PREMIUM MINIMALIST CSS
+# 1. PAGE CONFIG & CSS
 # ============================================================
 st.set_page_config(
     page_title="Reddit Pain Radar",
     page_icon="🎯",
-    layout="centered", # Centered is significantly better for readability
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# This CSS strips away Streamlit's default cruft and enforces a clean, Vercel-like aesthetic.
 st.markdown("""
 <style>
-    /* Hide Streamlit top header and default footer */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    
-    /* Enforce a clean, light background globally */
-    .stApp {
-        background-color: #FAFAFB;
-    }
-    
-    /* Typography refinements */
+
+    .stApp { background-color: #FAFAFB; }
+
     html, body, [class*="css"] {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         color: #111827;
         -webkit-font-smoothing: antialiased;
     }
 
-    /* Premium Input Field */
+    /* Input */
     .stTextInput > div > div > input {
         border-radius: 8px !important;
         border: 1px solid #E5E7EB !important;
         padding: 0.85rem 1.25rem !important;
-        font-size: 1.1rem !important; /* Increased */
+        font-size: 1.1rem !important;
         background-color: #FFFFFF !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
         transition: all 0.2s ease;
     }
     .stTextInput > div > div > input:focus {
@@ -52,15 +47,15 @@ st.markdown("""
         box-shadow: 0 0 0 1px #000000 !important;
     }
 
-    /* Premium Button (Stark Black) */
+    /* Primary button */
     .stButton > button[kind="primary"] {
         background-color: #111827 !important;
         color: #FFFFFF !important;
         border-radius: 8px !important;
         border: none !important;
         font-weight: 600 !important;
-        padding: 0.85rem !important; /* Increased */
-        font-size: 1.05rem !important; /* Increased */
+        padding: 0.85rem !important;
+        font-size: 1.05rem !important;
         transition: transform 0.1s ease, background-color 0.2s ease !important;
     }
     .stButton > button[kind="primary"]:hover {
@@ -68,33 +63,66 @@ st.markdown("""
         transform: translateY(-1px);
     }
 
-    /* Premium Result Cards */
+    /* Secondary button */
+    .stButton > button[kind="secondary"] {
+        background-color: #FFFFFF !important;
+        color: #374151 !important;
+        border-radius: 8px !important;
+        border: 1px solid #E5E7EB !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton > button[kind="secondary"]:hover {
+        border-color: #111827 !important;
+        color: #111827 !important;
+    }
+
+    /* Download button */
+    .stDownloadButton > button {
+        background-color: #FFFFFF !important;
+        color: #374151 !important;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+    }
+    .stDownloadButton > button:hover {
+        border-color: #111827 !important;
+        color: #111827 !important;
+    }
+
+    /* Cards */
     .pain-card {
         background-color: #FFFFFF;
         border: 1px solid #E5E7EB;
         border-radius: 12px;
-        padding: 2rem; /* Increased padding to balance larger text */
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
     }
-    
-    .pain-card.top-pick {
-        border: 2px solid #111827;
-    }
+    .pain-card.top-pick { border: 2px solid #111827; }
+    .pain-card.rank-2 { opacity: 0.97; }
+    .pain-card.rank-3 { opacity: 0.94; }
+    .pain-card.rank-4 { opacity: 0.91; }
+    .pain-card.rank-5 { opacity: 0.88; }
 
     .card-title {
-        font-size: 1.5rem; /* Bumped from 1.25 to 1.5 */
+        font-size: 1.5rem;
         font-weight: 800;
         color: #111827;
         margin-bottom: 0.75rem;
         margin-top: 0;
         line-height: 1.3;
     }
-    
+    .card-title.rank-2 { font-size: 1.35rem; }
+    .card-title.rank-3 { font-size: 1.25rem; }
+    .card-title.rank-4 { font-size: 1.2rem; }
+    .card-title.rank-5 { font-size: 1.15rem; }
+
     .card-desc {
-        font-size: 1.1rem; /* Bumped from 0.95 to 1.1 */
+        font-size: 1.05rem;
         color: #4B5563;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
         line-height: 1.6;
     }
 
@@ -105,18 +133,16 @@ st.markdown("""
         margin-bottom: 1.25rem;
         border-left: 4px solid #111827;
     }
-
     .app-solution-title {
-        font-size: 0.85rem; /* Bumped from 0.75 to 0.85 */
+        font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         font-weight: 700;
         color: #6B7280;
         margin-bottom: 0.5rem;
     }
-
     .app-solution-text {
-        font-size: 1.1rem; /* Bumped from 0.95 to 1.1 */
+        font-size: 1.05rem;
         font-weight: 600;
         color: #111827;
         margin: 0;
@@ -124,36 +150,50 @@ st.markdown("""
     }
 
     .evidence-quote {
-        font-size: 1rem; /* Bumped from 0.875 to 1.0 */
+        font-size: 0.95rem;
         color: #6B7280;
         font-style: italic;
         margin: 0;
         line-height: 1.5;
     }
 
-    /* Metric Pills */
+    /* Metric pills */
     .metric-container {
         display: flex;
         gap: 0.75rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
         flex-wrap: wrap;
+        align-items: center;
     }
     .metric-pill {
-        padding: 0.4rem 1rem; /* Increased padding */
+        padding: 0.4rem 1rem;
         border-radius: 999px;
-        font-size: 0.9rem; /* Bumped from 0.75 to 0.9 */
+        font-size: 0.875rem;
         font-weight: 600;
         background-color: #F3F4F6;
         color: #374151;
         border: 1px solid #E5E7EB;
     }
     .pill-high { background-color: #DCFCE7; color: #166534; border-color: #BBF7D0; }
-    .pill-med { background-color: #FEF9C3; color: #854D0E; border-color: #FEF08A; }
-    .pill-low { background-color: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+    .pill-med  { background-color: #FEF9C3; color: #854D0E; border-color: #FEF08A; }
+    .pill-low  { background-color: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+
+    .ai-note {
+        font-size: 0.78rem;
+        color: #9CA3AF;
+        margin-left: auto;
+        font-style: italic;
+    }
+
+    .divider {
+        border: none;
+        border-top: 1px solid #E5E7EB;
+        margin: 2rem 0;
+    }
 
     .subtle-footer {
         text-align: center;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         color: #9CA3AF;
         margin-top: 4rem;
         padding-bottom: 2rem;
@@ -162,64 +202,75 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 2. STATE MANAGEMENT & API SETUP
+# 2. SESSION STATE
 # ============================================================
-if "results" not in st.session_state:
-    st.session_state.results = None
-if "last_keyword" not in st.session_state:
-    st.session_state.last_keyword = ""
+defaults = {
+    "results": None,
+    "last_keyword": "",
+    "last_scan_time": 0,
+    "post_count": 0,
+}
+for k, v in defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
 
-# API Key handling - No more ugly sidebar!
 API_KEY = st.secrets.get("GEMINI_API_KEY", "")
+COOLDOWN_SECONDS = 30
 
 # ============================================================
-# 3. CORE LOGIC (BULLETPROOF JSON ENFORCEMENT)
+# 3. CORE LOGIC
 # ============================================================
-def fetch_reddit_posts(keyword, limit=25):
+def fetch_reddit_posts(keyword, limit=40):
     headers = {"User-Agent": "PainRadar/2.0 (research tool)"}
-    url = f"https://www.reddit.com/search.rss?q={keyword}&type=link&sort=new&limit={limit}&t=month"
-    
+    # relevance + year gives richer signal than new + month
+    url = f"https://www.reddit.com/search.rss?q={keyword}&type=link&sort=relevance&limit={limit}&t=year"
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         root = ET.fromstring(response.content)
-    except Exception as e:
-        st.error("Failed to connect to Reddit. They might be rate-limiting. Try again in a minute.")
+    except Exception:
+        st.error("Failed to connect to Reddit. They may be rate-limiting — try again in a minute.")
         return []
 
     ns = {"atom": "http://www.w3.org/2005/Atom"}
     entries = root.findall("atom:entry", ns) or root.findall(".//item")
-    
-    seen_titles = set()
-    results = []
 
+    seen, results = set(), []
     for entry in entries[:limit]:
-        title = (entry.findtext("atom:title", default="", namespaces=ns) or entry.findtext("title", default="")).strip()
-        body = (entry.findtext("atom:content", default="", namespaces=ns) or entry.findtext("description", default=""))
-        body = re.sub(r"<[^>]+>", " ", body).strip()
-        
-        if title in seen_titles or not title:
+        title = (entry.findtext("atom:title", default="", namespaces=ns) or
+                 entry.findtext("title", default="")).strip()
+        body  = (entry.findtext("atom:content", default="", namespaces=ns) or
+                 entry.findtext("description", default=""))
+        body  = re.sub(r"<[^>]+>", " ", body).strip()
+        if title in seen or not title:
             continue
-        seen_titles.add(title)
-        results.append({"title": title, "body": body[:600]})
+        seen.add(title)
+        results.append({"title": title, "body": body[:800]})
         time.sleep(0.05)
-
     return results
 
+
 def analyse_pain_points(keyword, posts, api_key):
-    if not posts: return []
+    if not posts:
+        return []
     client = genai.Client(api_key=api_key)
-    
     posts_text = "\n".join([f"Title: {p['title']}\nBody: {p['body']}" for p in posts])
-    
+
     prompt = f"""
-    Analyze these Reddit posts about "{keyword}". Extract genuine user pain points, frustrations, or unmet needs.
-    Posts:
-    {posts_text}
-    """
-    
-    # THE CRITICAL FIX: We force the API to return a strict JSON array.
-    # No more stripping markdown or risking JSONDecodeErrors.
+You are a product researcher. Analyze these Reddit posts about "{keyword}".
+Extract the top 5 genuine user pain points, frustrations, or unmet needs that represent real product opportunities.
+
+Scoring definitions:
+- demand_score: How frequently and urgently do people express this problem? (1=rare, 10=constant/urgent)
+- difficulty_score: How technically hard is it to build a solution? (1=easy, 10=very hard)
+- opportunity_score: Overall product opportunity weighing high demand against low-to-medium difficulty (1-10)
+
+For evidence, only use text that closely paraphrases or directly quotes from the posts provided below.
+
+Posts:
+{posts_text}
+"""
+
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash",
@@ -231,15 +282,16 @@ def analyse_pain_points(keyword, posts, api_key):
                     "items": {
                         "type": "OBJECT",
                         "properties": {
-                            "pain_point": {"type": "STRING", "description": "Short name (5-8 words)"},
-                            "description": {"type": "STRING", "description": "One sentence explaining the problem"},
-                            "demand_score": {"type": "INTEGER", "description": "1 to 10"},
+                            "pain_point":       {"type": "STRING", "description": "Short name (5-8 words)"},
+                            "description":      {"type": "STRING", "description": "One sentence explaining the problem"},
+                            "demand_score":     {"type": "INTEGER", "description": "1 to 10"},
                             "difficulty_score": {"type": "INTEGER", "description": "1 to 10"},
-                            "opportunity_score": {"type": "INTEGER", "description": "1 to 10"},
-                            "app_idea": {"type": "STRING", "description": "One sentence describing the solution"},
-                            "evidence": {"type": "STRING", "description": "A direct quote from the posts"}
+                            "opportunity_score":{"type": "INTEGER", "description": "1 to 10"},
+                            "app_idea":         {"type": "STRING", "description": "One sentence describing the missing tool"},
+                            "evidence":         {"type": "STRING", "description": "Close paraphrase or direct quote grounded in the posts above"}
                         },
-                        "required": ["pain_point", "description", "demand_score", "difficulty_score", "opportunity_score", "app_idea", "evidence"]
+                        "required": ["pain_point", "description", "demand_score",
+                                     "difficulty_score", "opportunity_score", "app_idea", "evidence"]
                     }
                 }
             )
@@ -250,86 +302,150 @@ def analyse_pain_points(keyword, posts, api_key):
         return []
 
 # ============================================================
-# 4. UI COMPONENTS
+# 4. HELPERS
 # ============================================================
-def get_pill_class(score, invert=False):
-    # If invert is True (like for Difficulty), a high score is bad (red)
+def pill_class(score, invert=False):
     if invert:
-        if score >= 8: return "pill-low"
-        if score >= 5: return "pill-med"
-        return "pill-high"
-    else:
-        if score >= 8: return "pill-high"
-        if score >= 5: return "pill-med"
-        return "pill-low"
+        return "pill-low" if score >= 8 else ("pill-med" if score >= 5 else "pill-high")
+    return "pill-high" if score >= 8 else ("pill-med" if score >= 5 else "pill-low")
 
-# --- HERO SECTION ---
+RANK_CLASSES = ["", "rank-2", "rank-3", "rank-4", "rank-5"]
+
+# ============================================================
+# 5. HERO
+# ============================================================
 st.markdown("""
-<div style="text-align: center; margin-top: 3rem; margin-bottom: 2rem;">
-    <h1 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -0.025em; margin-bottom: 0.5rem; color: #111827;">
+<div style="text-align:center; margin-top:3rem; margin-bottom:2rem;">
+    <h1 style="font-size:2.5rem; font-weight:800; letter-spacing:-0.025em; margin-bottom:0.5rem; color:#111827;">
         Pain Radar
     </h1>
-    <p style="color: #6B7280; font-size: 1.1rem; max-width: 500px; margin: 0 auto;">
+    <p style="color:#6B7280; font-size:1.1rem; max-width:500px; margin:0 auto;">
         Discover what people actually want built by analyzing real frustrations on Reddit.
     </p>
 </div>
 """, unsafe_allow_html=True)
 
-# --- SEARCH BAR ---
+# ============================================================
+# 6. SEARCH BAR
+# ============================================================
 col1, col2 = st.columns([3, 1])
 with col1:
-    keyword = st.text_input("keyword", placeholder="e.g. sourdough, marathon training, AWS...", label_visibility="collapsed")
+    keyword = st.text_input(
+        "keyword",
+        placeholder="e.g. sourdough, marathon training, AWS...",
+        label_visibility="collapsed"
+    )
 with col2:
     scan_clicked = st.button("Scan Reddit", type="primary", use_container_width=True)
 
-# --- MISSING API KEY HANDLING ---
 if not API_KEY:
-    st.warning("⚠️ No hosted API key found. Please add GEMINI_API_KEY to your Streamlit secrets to run this app.")
+    st.warning("⚠️ No hosted API key found. Add GEMINI_API_KEY to your Streamlit secrets.")
 
-# --- EXECUTION ---
+# ============================================================
+# 7. RATE LIMIT + EXECUTION
+# ============================================================
 if scan_clicked and keyword and API_KEY:
-    st.session_state.results = None # Clear old results instantly
-    
-    with st.spinner("Scraping Reddit and analyzing with Gemini..."):
-        posts = fetch_reddit_posts(keyword)
-        if posts:
-            results = analyse_pain_points(keyword, posts, API_KEY)
-            st.session_state.results = sorted(results, key=lambda x: x.get("opportunity_score", 0), reverse=True)
-            st.session_state.last_keyword = keyword
+    elapsed = time.time() - st.session_state.last_scan_time
+    if elapsed < COOLDOWN_SECONDS:
+        remaining = int(COOLDOWN_SECONDS - elapsed)
+        st.warning(f"⏳ Please wait {remaining}s before scanning again.")
+    else:
+        st.session_state.results = None
+        with st.spinner("Fetching Reddit posts and analyzing with Gemini…"):
+            posts = fetch_reddit_posts(keyword)
+            if posts:
+                results = analyse_pain_points(keyword, posts, API_KEY)
+                st.session_state.results      = sorted(results, key=lambda x: x.get("opportunity_score", 0), reverse=True)
+                st.session_state.last_keyword = keyword
+                st.session_state.last_scan_time = time.time()
+                st.session_state.post_count   = len(posts)
 
-# --- RESULTS DISPLAY ---
+# ============================================================
+# 8. RESULTS
+# ============================================================
 if st.session_state.results:
-    st.markdown(f"<p style='color: #6B7280; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem; font-size: 1.05rem;'>Top opportunities for '{st.session_state.last_keyword}'</p>", unsafe_allow_html=True)
-    
-    for i, item in enumerate(st.session_state.results):
-        is_top = i == 0
-        card_class = "pain-card top-pick" if is_top else "pain-card"
-        badge = "✨ TOP OPPORTUNITY" if is_top else f"#{i+1}"
-        
-        # CRITICAL: Do NOT indent the HTML below this line. It must be flush left.
-        html_string = f"""
-<div class="{card_class}">
-<p style="font-size: 0.85rem; font-weight: 700; color: #9CA3AF; margin-bottom: 0.5rem; letter-spacing: 0.05em;">{badge}</p>
-<h3 class="card-title">{item['pain_point']}</h3>
+    results      = st.session_state.results
+    kw           = st.session_state.last_keyword
+    post_count   = st.session_state.post_count
+
+    # Header
+    st.markdown(f"""
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2rem; margin-bottom:1rem;">
+        <p style="color:#6B7280; font-weight:600; font-size:1.05rem; margin:0;">
+            Top opportunities for '<strong style="color:#111827;">{kw}</strong>'
+        </p>
+        <p style="color:#9CA3AF; font-size:0.82rem; margin:0;">
+            {post_count} posts · AI-estimated scores
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Summary table
+    summary = [
+        {
+            "Rank":        f"#{i+1}",
+            "Pain Point":  r["pain_point"],
+            "Demand":      f"{r['demand_score']}/10",
+            "Difficulty":  f"{r['difficulty_score']}/10",
+            "Opportunity": f"{r['opportunity_score']}/10",
+        }
+        for i, r in enumerate(results)
+    ]
+    st.dataframe(summary, use_container_width=True, hide_index=True)
+
+    # CSV download
+    df  = pd.DataFrame(results)
+    csv = df.to_csv(index=False)
+    st.download_button(
+        label="⬇ Download full results as CSV",
+        data=csv,
+        file_name=f"pain_radar_{kw.replace(' ', '_')}.csv",
+        mime="text/csv"
+    )
+
+    st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+
+    # Cards
+    for i, item in enumerate(results):
+        is_top     = i == 0
+        rank_cls   = RANK_CLASSES[min(i, 4)]
+        card_cls   = "pain-card top-pick" if is_top else f"pain-card {rank_cls}"
+        badge      = "✨ TOP OPPORTUNITY" if is_top else f"#{i+1}"
+        title_cls  = f"card-title {rank_cls}".strip()
+
+        st.markdown(f"""
+<div class="{card_cls}">
+<p style="font-size:0.8rem; font-weight:700; color:#9CA3AF; margin-bottom:0.5rem; letter-spacing:0.05em;">{badge}</p>
+<h3 class="{title_cls}">{item['pain_point']}</h3>
 <p class="card-desc">{item['description']}</p>
 <div class="metric-container">
-<span class="metric-pill {get_pill_class(item['demand_score'])}">Demand: {item['demand_score']}/10</span>
-<span class="metric-pill {get_pill_class(item['difficulty_score'], invert=True)}">Difficulty: {item['difficulty_score']}/10</span>
-<span class="metric-pill {get_pill_class(item['opportunity_score'])}">Overall Score: {item['opportunity_score']}/10</span>
+  <span class="metric-pill {pill_class(item['demand_score'])}">Demand: {item['demand_score']}/10</span>
+  <span class="metric-pill {pill_class(item['difficulty_score'], invert=True)}">Difficulty: {item['difficulty_score']}/10</span>
+  <span class="metric-pill {pill_class(item['opportunity_score'])}">Score: {item['opportunity_score']}/10</span>
+  <span class="ai-note">Gemini estimate · {post_count} posts</span>
 </div>
 <div class="app-solution">
-<p class="app-solution-title">The Missing Tool</p>
-<p class="app-solution-text">{item['app_idea']}</p>
+  <p class="app-solution-title">The Missing Tool</p>
+  <p class="app-solution-text">{item['app_idea']}</p>
 </div>
 <p class="evidence-quote">"{item['evidence']}"</p>
 </div>
-"""
-        st.markdown(html_string, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# --- CLEAN FOOTER ---
+    # Bottom new-search button
+    st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
+    _, mid, _ = st.columns([1, 2, 1])
+    with mid:
+        if st.button("↑ New Search", type="secondary", use_container_width=True):
+            st.session_state.results = None
+            st.rerun()
+
+# ============================================================
+# 9. FOOTER
+# ============================================================
 st.markdown("""
 <div class="subtle-footer">
-    Built by BlurryRainbow. Powered by Gemini. 
-    <br><span style="opacity: 0.5;">(Running on hosted API key)</span>
+    Built by BlurryRainbow · Powered by Gemini<br>
+    <span style="opacity:0.6;">Scores are AI estimates based on Reddit post analysis — not statistically validated</span>
 </div>
 """, unsafe_allow_html=True)

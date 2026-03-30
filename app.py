@@ -41,8 +41,8 @@ st.markdown("""
     .stTextInput > div > div > input {
         border-radius: 8px !important;
         border: 1px solid #E5E7EB !important;
-        padding: 0.75rem 1rem !important;
-        font-size: 1rem !important;
+        padding: 0.85rem 1.25rem !important;
+        font-size: 1.1rem !important; /* Increased */
         background-color: #FFFFFF !important;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
         transition: all 0.2s ease;
@@ -59,7 +59,8 @@ st.markdown("""
         border-radius: 8px !important;
         border: none !important;
         font-weight: 600 !important;
-        padding: 0.75rem !important;
+        padding: 0.85rem !important; /* Increased */
+        font-size: 1.05rem !important; /* Increased */
         transition: transform 0.1s ease, background-color 0.2s ease !important;
     }
     .stButton > button[kind="primary"]:hover {
@@ -72,72 +73,75 @@ st.markdown("""
         background-color: #FFFFFF;
         border: 1px solid #E5E7EB;
         border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
+        padding: 2rem; /* Increased padding to balance larger text */
+        margin-bottom: 2rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     }
     
     .pain-card.top-pick {
-        border: 2px solid #111827; /* Darker border for the top pick */
+        border: 2px solid #111827;
     }
 
     .card-title {
-        font-size: 1.25rem;
-        font-weight: 700;
+        font-size: 1.5rem; /* Bumped from 1.25 to 1.5 */
+        font-weight: 800;
         color: #111827;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
         margin-top: 0;
+        line-height: 1.3;
     }
     
     .card-desc {
-        font-size: 0.95rem;
+        font-size: 1.1rem; /* Bumped from 0.95 to 1.1 */
         color: #4B5563;
-        margin-bottom: 1rem;
-        line-height: 1.5;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
     }
 
     .app-solution {
         background-color: #F3F4F6;
-        padding: 1rem;
+        padding: 1.25rem;
         border-radius: 8px;
-        margin-bottom: 1rem;
+        margin-bottom: 1.25rem;
         border-left: 4px solid #111827;
     }
 
     .app-solution-title {
-        font-size: 0.75rem;
+        font-size: 0.85rem; /* Bumped from 0.75 to 0.85 */
         text-transform: uppercase;
         letter-spacing: 0.05em;
         font-weight: 700;
         color: #6B7280;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.5rem;
     }
 
     .app-solution-text {
-        font-size: 0.95rem;
+        font-size: 1.1rem; /* Bumped from 0.95 to 1.1 */
         font-weight: 600;
         color: #111827;
         margin: 0;
+        line-height: 1.5;
     }
 
     .evidence-quote {
-        font-size: 0.875rem;
+        font-size: 1rem; /* Bumped from 0.875 to 1.0 */
         color: #6B7280;
         font-style: italic;
         margin: 0;
+        line-height: 1.5;
     }
 
     /* Metric Pills */
     .metric-container {
         display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
         flex-wrap: wrap;
     }
     .metric-pill {
-        padding: 0.25rem 0.75rem;
+        padding: 0.4rem 1rem; /* Increased padding */
         border-radius: 999px;
-        font-size: 0.75rem;
+        font-size: 0.9rem; /* Bumped from 0.75 to 0.9 */
         font-weight: 600;
         background-color: #F3F4F6;
         color: #374151;
@@ -147,10 +151,9 @@ st.markdown("""
     .pill-med { background-color: #FEF9C3; color: #854D0E; border-color: #FEF08A; }
     .pill-low { background-color: #FEE2E2; color: #991B1B; border-color: #FECACA; }
 
-    /* Custom Subtle Footer */
     .subtle-footer {
         text-align: center;
-        font-size: 0.75rem;
+        font-size: 0.85rem;
         color: #9CA3AF;
         margin-top: 4rem;
         padding-bottom: 2rem;
@@ -296,38 +299,37 @@ if scan_clicked and keyword and API_KEY:
 
 # --- RESULTS DISPLAY ---
 if st.session_state.results:
-    st.markdown(f"<p style='color: #6B7280; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem;'>Top opportunities for '{st.session_state.last_keyword}'</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='color: #6B7280; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem; font-size: 1.05rem;'>Top opportunities for '{st.session_state.last_keyword}'</p>", unsafe_allow_html=True)
     
     for i, item in enumerate(st.session_state.results):
         is_top = i == 0
         card_class = "pain-card top-pick" if is_top else "pain-card"
         badge = "✨ TOP OPPORTUNITY" if is_top else f"#{i+1}"
         
-        st.markdown(f"""
-        <div class="{card_class}">
-            <p style="font-size: 0.75rem; font-weight: 700; color: #9CA3AF; margin-bottom: 0.25rem;">{badge}</p>
-            <h3 class="card-title">{item['pain_point']}</h3>
-            <p class="card-desc">{item['description']}</p>
-            
-            <div class="metric-container">
-                <span class="metric-pill {get_pill_class(item['demand_score'])}">Demand: {item['demand_score']}/10</span>
-                <span class="metric-pill {get_pill_class(item['difficulty_score'], invert=True)}">Difficulty: {item['difficulty_score']}/10</span>
-                <span class="metric-pill {get_pill_class(item['opportunity_score'])}">Overall Score: {item['opportunity_score']}/10</span>
-            </div>
-            
-            <div class="app-solution">
-                <p class="app-solution-title">The Missing Tool</p>
-                <p class="app-solution-text">{item['app_idea']}</p>
-            </div>
-            
-            <p class="evidence-quote">" {item['evidence']} "</p>
-        </div>
-        """, unsafe_allow_html=True)
+        # CRITICAL: Do NOT indent the HTML below this line. It must be flush left.
+        html_string = f"""
+<div class="{card_class}">
+<p style="font-size: 0.85rem; font-weight: 700; color: #9CA3AF; margin-bottom: 0.5rem; letter-spacing: 0.05em;">{badge}</p>
+<h3 class="card-title">{item['pain_point']}</h3>
+<p class="card-desc">{item['description']}</p>
+<div class="metric-container">
+<span class="metric-pill {get_pill_class(item['demand_score'])}">Demand: {item['demand_score']}/10</span>
+<span class="metric-pill {get_pill_class(item['difficulty_score'], invert=True)}">Difficulty: {item['difficulty_score']}/10</span>
+<span class="metric-pill {get_pill_class(item['opportunity_score'])}">Overall Score: {item['opportunity_score']}/10</span>
+</div>
+<div class="app-solution">
+<p class="app-solution-title">The Missing Tool</p>
+<p class="app-solution-text">{item['app_idea']}</p>
+</div>
+<p class="evidence-quote">"{item['evidence']}"</p>
+</div>
+"""
+        st.markdown(html_string, unsafe_allow_html=True)
 
 # --- CLEAN FOOTER ---
 st.markdown("""
 <div class="subtle-footer">
-    Built by a solo founder. Powered by Gemini. 
+    Built by BlurryRainbow. Powered by Gemini. 
     <br><span style="opacity: 0.5;">(Running on hosted API key)</span>
 </div>
 """, unsafe_allow_html=True)

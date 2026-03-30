@@ -11,77 +11,221 @@ from google import genai
 # ============================================================
 
 st.set_page_config(
-    page_title="Reddit Pain Point Scanner",
+    page_title="Reddit Pain Radar",
     page_icon="radar",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # ============================================================
-# STYLING FRONT END STYLING — EDIT THIS SECTION TO CHANGE THE LOOK
+# FRONT END STYLING — EDIT THIS SECTION TO CHANGE THE LOOK
 # ============================================================
-# Everything between the <style> tags controls how the app looks.
-# Key things you can change:
-#   - background: #1e1e2e        → card background colour
-#   - border: 1px solid #313244  → card border colour
-#   - color: #cdd6f4             → text colour
-#   - border-radius: 12px        → how rounded the corners are
-#   - #f38ba8                    → TOP PICK badge colour
-#   - #89b4fa                    → evidence box left border colour
-# When ready to restyle, change values here and re-run Cell 4 and 5.
+# Key values to tweak:
+#   Background:      #0a0a0f   → main page colour
+#   Card bg:         #13131f   → result card colour
+#   Card border:     #2a2a3e   → card outline
+#   Accent colour:   #6366f1   → indigo, used for highlights
+#   High score:      #10b981   → green
+#   Mid score:       #f59e0b   → amber
+#   Low score:       #ef4444   → red
+#   Primary text:    #f1f5f9
+#   Secondary text:  #94a3b8
 # ============================================================
+
 st.markdown("""
 <style>
-    .main { padding: 2rem 3rem; }
+    /* ---- Full dark background ---- */
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    [data-testid="block-container"] {
+        background-color: #0a0a0f !important;
+    }
+
+    [data-testid="stHeader"] {
+        background-color: #0a0a0f !important;
+        border-bottom: 1px solid #1e1e2e;
+    }
+
+    section[data-testid="stSidebar"] {
+        background-color: #0d0d18 !important;
+        border-right: 1px solid #1e1e2e;
+    }
+
+    /* ---- Global text colours ---- */
+    html, body, [class*="css"], p, span, label, div {
+        color: #f1f5f9;
+    }
+
+    /* ---- Input field ---- */
     .stTextInput > div > div > input {
-        font-size: 1.1rem;
-        padding: 0.75rem;
+        background-color: #13131f !important;
+        border: 1px solid #2a2a3e !important;
+        border-radius: 10px !important;
+        color: #f1f5f9 !important;
+        font-size: 1.05rem !important;
+        padding: 0.75rem 1rem !important;
     }
+
+    .stTextInput > div > div > input:focus {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
+    }
+
+    .stTextInput > div > div > input::placeholder {
+        color: #4a4a6a !important;
+    }
+
+    /* ---- Primary button ---- */
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+        border: none !important;
+        border-radius: 10px !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+        padding: 0.75rem !important;
+        transition: opacity 0.2s ease !important;
+    }
+
+    .stButton > button[kind="primary"]:hover {
+        opacity: 0.85 !important;
+    }
+
+    /* ---- Download button ---- */
+    .stDownloadButton > button {
+        background-color: #13131f !important;
+        border: 1px solid #2a2a3e !important;
+        border-radius: 8px !important;
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+    }
+
+    .stDownloadButton > button:hover {
+        border-color: #6366f1 !important;
+        color: #f1f5f9 !important;
+    }
+
+    /* ---- Dividers ---- */
+    hr {
+        border-color: #1e1e2e !important;
+    }
+
+    /* ---- Spinner text ---- */
+    .stSpinner > div {
+        color: #94a3b8 !important;
+    }
+
+    /* ---- Result cards ---- */
     .result-card {
-        background: #1e1e2e;
-        border: 1px solid #313244;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
+        background: #13131f;
+        border: 1px solid #2a2a3e;
+        border-radius: 14px;
+        padding: 1.75rem;
+        margin-bottom: 1.25rem;
+        transition: border-color 0.2s ease;
     }
+
+    .result-card:hover {
+        border-color: #6366f1;
+    }
+
+    .result-card.top-card {
+        border-color: #6366f1;
+        background: linear-gradient(135deg, #13131f 0%, #16162a 100%);
+    }
+
+    /* ---- Score pills ---- */
     .score-row {
         display: flex;
-        gap: 1rem;
-        margin: 0.75rem 0;
+        gap: 0.75rem;
+        margin: 1rem 0;
+        flex-wrap: wrap;
     }
+
     .score-pill {
-        background: #313244;
+        background: #0a0a0f;
+        border: 1px solid #2a2a3e;
         border-radius: 20px;
-        padding: 0.3rem 0.9rem;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-    .top-badge {
-        background: #f38ba8;
-        color: #1e1e2e;
-        border-radius: 20px;
-        padding: 0.2rem 0.8rem;
-        font-size: 0.8rem;
+        padding: 0.35rem 1rem;
+        font-size: 0.82rem;
         font-weight: 700;
-        margin-left: 0.5rem;
+        letter-spacing: 0.02em;
     }
+
+    /* ---- TOP PICK badge ---- */
+    .top-badge {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: #ffffff;
+        border-radius: 20px;
+        padding: 0.2rem 0.85rem;
+        font-size: 0.75rem;
+        font-weight: 800;
+        margin-left: 0.6rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        vertical-align: middle;
+    }
+
+    /* ---- Evidence quote ---- */
     .evidence-box {
-        background: #181825;
-        border-left: 3px solid #89b4fa;
-        padding: 0.6rem 1rem;
+        background: #0a0a0f;
+        border-left: 3px solid #6366f1;
+        padding: 0.75rem 1.1rem;
         border-radius: 0 8px 8px 0;
-        font-size: 0.9rem;
-        color: #cdd6f4;
-        margin-top: 0.75rem;
+        font-size: 0.88rem;
+        color: #94a3b8;
+        margin-top: 1rem;
         font-style: italic;
+        line-height: 1.6;
     }
+
+    /* ---- App idea line ---- */
+    .app-idea {
+        color: #cbd5e1 !important;
+        font-size: 0.95rem;
+        margin: 0.5rem 0 0 0;
+        line-height: 1.5;
+    }
+
+    /* ---- Card title ---- */
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #f1f5f9;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+    }
+
+    /* ---- Card description ---- */
+    .card-desc {
+        color: #94a3b8;
+        font-size: 0.92rem;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    /* ---- Footer ---- */
     .footer {
         text-align: center;
-        color: #6c7086;
+        color: #2a2a3e;
         font-size: 0.8rem;
-        margin-top: 3rem;
-        padding-top: 1rem;
-        border-top: 1px solid #313244;
+        margin-top: 4rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #1e1e2e;
+    }
+
+    /* ---- Sidebar text ---- */
+    .stSidebar .stMarkdown p,
+    .stSidebar .stCaption {
+        color: #94a3b8 !important;
+    }
+
+    /* ---- Warning and error boxes ---- */
+    [data-testid="stAlert"] {
+        background-color: #13131f !important;
+        border-radius: 10px !important;
+        border: 1px solid #2a2a3e !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -145,7 +289,6 @@ def fetch_reddit_posts(keyword, limit=25):
         body = re.sub(r"&amp;", "&", body)
         body = re.sub(r"&#39;", "'", body)
 
-        # Deduplicate
         if title in seen_titles or not title:
             continue
         seen_titles.add(title)
@@ -262,18 +405,18 @@ def analyse_pain_points(keyword, posts, api_key):
 
 def score_color(score):
     if score >= 8:
-        return "#a6e3a1"
+        return "#10b981"
     elif score >= 6:
-        return "#f9e2af"
+        return "#f59e0b"
     else:
-        return "#f38ba8"
+        return "#ef4444"
 
 def render_results(pain_points, keyword):
     if not pain_points:
         st.warning(
             f"No clear pain points found for '{keyword}'. "
             "Try a more specific or complaint-heavy topic like "
-            "'budgeting app frustrations' or 'running injury'."
+            "'budgeting app' or 'running injury'."
         )
         return
 
@@ -283,9 +426,13 @@ def render_results(pain_points, keyword):
         reverse=True
     )
 
-    st.markdown(f"### Found {len(sorted_points)} pain points for **{keyword}**")
-    st.caption("Ranked by opportunity score — highest first.")
-    st.divider()
+    st.markdown(
+        f"<p style='color:#94a3b8; font-size:0.95rem; margin-bottom:1.5rem;'>"
+        f"Found <strong style='color:#f1f5f9;'>{len(sorted_points)} pain points"
+        f"</strong> for <strong style='color:#6366f1;'>{keyword}</strong> — "
+        f"ranked by opportunity score.</p>",
+        unsafe_allow_html=True
+    )
 
     for i, item in enumerate(sorted_points):
         is_top = i == 0
@@ -297,31 +444,35 @@ def render_results(pain_points, keyword):
         app_idea = item.get("app_idea", "")
         evidence = item.get("evidence", "")
 
-        badge = '<span class="top-badge">TOP PICK</span>' if is_top else ""
+        badge = '<span class="top-badge">Top Pick</span>' if is_top else ""
+        card_class = "result-card top-card" if is_top else "result-card"
 
         st.markdown(f"""
-<div class="result-card">
-    <h4 style="margin:0 0 0.5rem 0;">#{i+1} &mdash; {pain}{badge}</h4>
-    <p style="margin:0.25rem 0; color:#cdd6f4;">{description}</p>
+<div class="{card_class}">
+    <p class="card-title">#{i+1} &mdash; {pain}{badge}</p>
+    <p class="card-desc">{description}</p>
     <div class="score-row">
-        <span class="score-pill" style="color:{score_color(demand)}">
-            Demand {demand}/10
+        <span class="score-pill" style="color:{score_color(demand)};">
+            Demand &nbsp;{demand}/10
         </span>
-        <span class="score-pill" style="color:{score_color(10 - difficulty)}">
-            Difficulty {difficulty}/10
+        <span class="score-pill" style="color:{score_color(10 - difficulty)};">
+            Difficulty &nbsp;{difficulty}/10
         </span>
-        <span class="score-pill" style="color:{score_color(opportunity)}">
-            Opportunity {opportunity}/10
+        <span class="score-pill" style="color:{score_color(opportunity)};">
+            Opportunity &nbsp;{opportunity}/10
         </span>
     </div>
-    <p style="margin:0.5rem 0;"><strong>App idea:</strong> {app_idea}</p>
+    <p class="app-idea"><strong style="color:#6366f1;">App idea:</strong> {app_idea}</p>
     <div class="evidence-box">"{evidence}"</div>
 </div>
 """, unsafe_allow_html=True)
 
-    # CSV export
     st.divider()
-    st.markdown("#### Export results")
+    st.markdown(
+        "<p style='color:#94a3b8; font-size:0.9rem; "
+        "margin-bottom:0.5rem;'>Export your results</p>",
+        unsafe_allow_html=True
+    )
 
     csv_lines = ["Pain Point,Description,App Idea,Demand,Difficulty,Opportunity,Evidence"]
     for item in sorted_points:
@@ -341,12 +492,12 @@ def render_results(pain_points, keyword):
     st.download_button(
         label="Download as CSV",
         data=csv_string,
-        file_name=f"pain_points_{keyword.replace(' ', '_')}.csv",
+        file_name=f"painradar_{keyword.replace(' ', '_')}.csv",
         mime="text/csv"
     )
 
 # ============================================================
-# SESSION STATE — keeps results alive across interactions
+# SESSION STATE
 # ============================================================
 
 if "results" not in st.session_state:
@@ -357,19 +508,15 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 # ============================================================
-# MAIN UI
+# SIDEBAR
 # ============================================================
 
-st.title("Reddit Pain Point Scanner")
-st.markdown(
-    "Find real user frustrations on Reddit and turn them into "
-    "buildable app ideas — powered by Gemini AI."
-)
-st.divider()
-
-# API key input
 with st.sidebar:
-    st.markdown("### Settings")
+    st.markdown(
+        "<p style='color:#6366f1; font-weight:700; "
+        "font-size:1rem;'>Pain Radar</p>",
+        unsafe_allow_html=True
+    )
     hosted_key = st.secrets.get("GEMINI_API_KEY", "")
     if hosted_key:
         api_key_input = hosted_key
@@ -378,35 +525,78 @@ with st.sidebar:
         api_key_input = st.text_input(
             "Gemini API Key",
             type="password",
-            placeholder="Paste your Gemini API key here",
+            placeholder="Paste your Gemini API key",
             help="Get a free key at aistudio.google.com"
         )
-        st.caption(
-            "Your key is never stored. It lives only in this session."
-        )
-    st.divider()
+        st.caption("Your key is never stored.")
+
     if st.session_state.history:
-        st.markdown("### Scan history")
-        for h in reversed(st.session_state.history):
+        st.divider()
+        st.markdown(
+            "<p style='color:#94a3b8; font-size:0.85rem; "
+            "font-weight:600;'>Recent scans</p>",
+            unsafe_allow_html=True
+        )
+        for h in reversed(st.session_state.history[-5:]):
             st.caption(f"- {h}")
 
-# Main input
+# ============================================================
+# HERO SECTION
+# ============================================================
+
+st.markdown("""
+<div style="text-align:center; padding: 3rem 1rem 2rem 1rem;">
+    <div style="display:inline-block; background:rgba(99,102,241,0.12);
+                border:1px solid rgba(99,102,241,0.3); border-radius:20px;
+                padding:0.3rem 1.1rem; margin-bottom:1.25rem;">
+        <span style="color:#818cf8; font-size:0.82rem; font-weight:600;
+                     letter-spacing:0.05em;">
+            POWERED BY GEMINI AI
+        </span>
+    </div>
+    <h1 style="font-size:2.8rem; font-weight:800; color:#f1f5f9;
+               line-height:1.15; margin:0 0 1rem 0;">
+        Find what people<br>
+        <span style="color:#6366f1;">actually want built</span>
+    </h1>
+    <p style="color:#94a3b8; font-size:1.05rem; max-width:480px;
+              margin:0 auto; line-height:1.7;">
+        Scans Reddit for real complaints and wishes, then ranks them
+        as buildable app opportunities — scored by demand and difficulty.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# SEARCH BAR
+# ============================================================
+
 col1, col2 = st.columns([4, 1])
 with col1:
     keyword = st.text_input(
-        "Enter a niche or topic",
-        placeholder="e.g. plant care, DnD, marathon training, sourdough",
+        "keyword",
+        placeholder="e.g. plant care, DnD, marathon training, sourdough...",
         label_visibility="collapsed"
     )
 with col2:
-    scan_button = st.button("Scan Reddit", use_container_width=True, type="primary")
+    scan_button = st.button(
+        "Scan Reddit",
+        use_container_width=True,
+        type="primary"
+    )
 
-st.caption(
-    "The app scans recent public Reddit posts for this topic, "
-    "then uses AI to surface the strongest pain points and app opportunities."
+st.markdown(
+    "<p style='color:#4a4a6a; font-size:0.82rem; margin-top:0.25rem;'>"
+    "Scans the 25 most recent public posts for this topic.</p>",
+    unsafe_allow_html=True
 )
 
-# Run scan
+st.divider()
+
+# ============================================================
+# SCAN LOGIC
+# ============================================================
+
 if scan_button:
     if not api_key_input:
         st.error("Please paste your Gemini API key in the sidebar first.")
@@ -417,7 +607,9 @@ if scan_button:
             posts = fetch_reddit_posts(keyword.strip(), limit=25)
 
         if posts:
-            with st.spinner(f"Analysing {len(posts)} posts with Gemini..."):
+            with st.spinner(
+                f"Analysing {len(posts)} posts with Gemini..."
+            ):
                 results = analyse_pain_points(
                     keyword.strip(), posts, api_key_input
                 )
@@ -428,13 +620,22 @@ if scan_button:
             if keyword.strip() not in st.session_state.history:
                 st.session_state.history.append(keyword.strip())
 
-# Show results if they exist
-if st.session_state.results is not None:
-    render_results(st.session_state.results, st.session_state.last_keyword)
+# ============================================================
+# RESULTS
+# ============================================================
 
-# Footer
+if st.session_state.results is not None:
+    render_results(
+        st.session_state.results,
+        st.session_state.last_keyword
+    )
+
+# ============================================================
+# FOOTER
+# ============================================================
+
 st.markdown(
-    '<div class="footer">Reddit Pain Point Scanner &mdash; '
-    'built with Streamlit + Gemini</div>',
+    '<div class="footer">Reddit Pain Radar &mdash; '
+    'built with Streamlit + Gemini AI</div>',
     unsafe_allow_html=True
 )

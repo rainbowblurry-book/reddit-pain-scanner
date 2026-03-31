@@ -34,22 +34,24 @@ API_KEY = st.secrets.get("GEMINI_API_KEY", "")
 # ============================================================
 # SIDEBAR (Global Navigation)
 # ============================================================
+# ============================================================
+# SIDEBAR (Global Navigation)
+# ============================================================
 with st.sidebar:
     # 1. WORKSPACE HEADER
     col1, col2 = st.columns([1, 4])
     with col1:
-        # A small avatar/logo to make it feel personalized
-        st.image("https://api.dicebear.com/7.x/shapes/svg?seed=curiosity", width=40)
+        # Calling your newly uploaded logo file!
+        st.image("assets/logo.png", width=40)
     with col2:
         st.markdown("**Builder Workspace**")
         st.caption("Free Tier")
         
     st.divider()
 
-    # 2. RECENT HISTORY (Stateful-looking navigation)
+    # 2. RECENT HISTORY
     st.markdown("<p style='font-size: 0.8rem; font-weight: 600; color: #7A7A9A; text-transform: uppercase;'>Recent Scans</p>", unsafe_allow_html=True)
     
-    # Simulating history buttons. In the future, you can tie these to st.session_state!
     st.button("🕒 Sourdough baking", use_container_width=True, type="secondary")
     st.button("🕒 D&D 5e campaigns", use_container_width=True, type="secondary")
     st.button("🕒 Marathon prep", use_container_width=True, type="secondary")
@@ -59,15 +61,12 @@ with st.sidebar:
     # 3. SETTINGS & CONFIGURATION
     st.markdown("<p style='font-size: 0.8rem; font-weight: 600; color: #7A7A9A; text-transform: uppercase;'>Engine Settings</p>", unsafe_allow_html=True)
     
-    # Moving the API key to the sidebar makes the main UI much cleaner
     api_key_input = st.text_input("Gemini API Key", type="password", help="Stored locally in your browser session.")
-    
-    # A slider for "Scan Depth" (Even if it doesn't do anything yet, it looks highly professional)
     st.slider("Subreddits to Scan", min_value=1, max_value=5, value=3, help="Higher depth takes longer to process.")
 
     st.divider()
     
-    # 4. PREMIUM UPSELL (The SaaS Touch)
+    # 4. PREMIUM UPSELL
     with st.container():
         st.markdown("🚀 **Upgrade to Pro**")
         st.caption("Unlock competitor analysis, CSV exports, and API access.")
@@ -114,6 +113,9 @@ if scan_clicked and keyword:
         status_container = st.empty()
         
         with status_container.container():
+            with status_container.container():
+            # Add your loading video here!
+            st.video("assets/loading_radar.mp4", autoplay=True, loop=True)
             st.info(f"📡 Calibrating radar for '{keyword}'...")
             
             # Fetch Posts
@@ -142,6 +144,8 @@ if scan_clicked and keyword:
 # ============================================================
 if st.session_state.results is not None:
     if len(st.session_state.results) == 0:
+        # Add your empty state illustration here!
+        st.image("assets/empty_state.png", use_column_width=True)
         st.info("🤔 No clear pain points found. Try a broader search term.")
     else:
         st.divider()

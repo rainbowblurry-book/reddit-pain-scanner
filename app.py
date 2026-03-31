@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils import fetch_reddit_posts, analyse_pain_points
+import time
 
 # ============================================================
 # PAGE CONFIG
@@ -13,7 +14,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# STYLING — edit colours and layout here
+# STYLING
 # ============================================================
 st.markdown("""
 <style>
@@ -63,7 +64,6 @@ st.markdown("""
     }
     .stButton > button[kind="primary"]:hover {
         background-color: #374151 !important;
-        transform: translateY(-1px);
     }
 
     .stButton > button[kind="secondary"] {
@@ -78,37 +78,6 @@ st.markdown("""
         background-color: #374151 !important;
     }
 
-    /* Example topic pills — light, small, rounded */
-    div[data-testid="stButton"] button {
-        background-color: #F3F4F6 !important;
-        color: #374151 !important;
-        border-radius: 999px !important;
-        border: 1px solid #E5E7EB !important;
-        font-size: 0.82rem !important;
-        font-weight: 500 !important;
-        padding: 0.3rem 0.75rem !important;
-        transition: all 0.15s ease !important;
-    }
-    div[data-testid="stButton"] button:hover {
-        background-color: #111827 !important;
-        color: #FFFFFF !important;
-        border-color: #111827 !important;
-    }
-    /* Override pill style back for primary + secondary */
-    .stButton > button[kind="primary"] {
-        background-color: #111827 !important;
-        color: #FFFFFF !important;
-        border-radius: 8px !important;
-        font-size: 1.05rem !important;
-        padding: 0.85rem !important;
-    }
-    .stButton > button[kind="secondary"] {
-        background-color: #111827 !important;
-        color: #FFFFFF !important;
-        border-radius: 8px !important;
-        font-size: 1rem !important;
-    }
-
     .stDownloadButton > button {
         background-color: #FFFFFF !important;
         color: #374151 !important;
@@ -121,7 +90,6 @@ st.markdown("""
         color: #111827 !important;
     }
 
-    /* Cards */
     .pain-card {
         background-color: #FFFFFF;
         border: 1px solid #E5E7EB;
@@ -136,8 +104,6 @@ st.markdown("""
         box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08);
         transform: translateY(-1px);
     }
-
-    /* Animated gradient border on top card */
     .pain-card.top-pick {
         background-color: #FDFDFD;
         border: none;
@@ -165,7 +131,6 @@ st.markdown("""
         50%  { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
-
     .pain-card.rank-2 { opacity: 0.97; }
     .pain-card.rank-3 { opacity: 0.94; }
     .pain-card.rank-4 { opacity: 0.91; }
@@ -181,7 +146,7 @@ st.markdown("""
     }
     .card-title.rank-2 { font-size: 1.35rem; }
     .card-title.rank-3 { font-size: 1.25rem; }
-    .card-title.rank-4 { font-size: 1.2rem;  }
+    .card-title.rank-4 { font-size: 1.2rem; }
     .card-title.rank-5 { font-size: 1.15rem; }
 
     .card-desc {
@@ -274,6 +239,8 @@ defaults = {
     "last_keyword":   "",
     "last_scan_time": 0,
     "post_count":     0,
+    "pending_kw":     "",
+    "do_scan":        False,
 }
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -291,6 +258,7 @@ def pill_class(score, invert=False):
         return "pill-low" if score >= 8 else ("pill-med" if score >= 5 else "pill-high")
     return "pill-high" if score >= 8 else ("pill-med" if score >= 5 else "pill-low")
 
+
 def render_score_cell(score, invert=False):
     cls = pill_class(score, invert=invert)
     colors = {
@@ -305,9 +273,9 @@ def render_score_cell(score, invert=False):
         f'{score}/10</span>'
     )
 
+
 def run_scan(keyword):
-    import time as _time
-    elapsed = _time.time() - st.session_state.last_scan_time
+    elapsed = time.time() - st.session_state.last_scan_time
     if elapsed < COOLDOWN_SECONDS:
         remaining = int(COOLDOWN_SECONDS - elapsed)
         st.warning(f"Please wait {remaining}s before scanning again.")
@@ -324,7 +292,7 @@ def run_scan(keyword):
                     reverse=True
                 )
                 st.session_state.last_keyword   = keyword
-                st.session_state.last_scan_time = _time.time()
+                st.session_state.last_scan_time = time.time()
                 st.session_state.post_count     = len(posts)
 
 # ============================================================
@@ -346,14 +314,7 @@ st.markdown("""
 
 # ============================================================
 # SEARCH BAR
-# — Fix: set st.session_state["kw"] directly from pills so
-#   the text input always reflects the current value
 # ============================================================
-if "pending_kw" not in st.session_state:
-    st.session_state["pending_kw"] = ""
-if "do_scan" not in st.session_state:
-    st.session_state["do_scan"] = False
-
 def on_enter():
     st.session_state["do_scan"] = True
 
@@ -373,6 +334,7 @@ with col2:
         type="primary",
         use_container_width=True
     )
+
 if not API_KEY:
     st.warning("No hosted API key found. Add GEMINI_API_KEY to Streamlit secrets.")
 
@@ -398,8 +360,7 @@ if st.session_state.results is None:
                 f'<div style="text-align:center; padding:1.5rem 1rem; '
                 f'background:#FFFFFF; border:1px solid #E5E7EB; '
                 f'border-radius:12px;">'
-                f'<div style="font-size:1.5rem; margin-bottom:0.5rem;">'
-                f'{icon}</div>'
+                f'<div style="font-size:1.5rem; margin-bottom:0.5rem;">{icon}</div>'
                 f'<p style="font-weight:700; color:#111827; margin:0 0 0.3rem 0; '
                 f'font-size:0.9rem;">{title}</p>'
                 f'<p style="color:#6B7280; font-size:0.8rem; margin:0; '
@@ -418,7 +379,7 @@ if st.session_state.results is None:
         "sourdough baking", "marathon training", "remote work",
         "language learning", "sleep tracking", "personal finance",
     ]
-   ex_cols = st.columns(len(examples))
+    ex_cols = st.columns(len(examples))
     for col, ex in zip(ex_cols, examples):
         with col:
             if st.button(ex, key=f"ex_{ex}", use_container_width=True):
@@ -430,8 +391,7 @@ if st.session_state.results is None:
 # SCAN EXECUTION
 # ============================================================
 active_keyword = keyword.strip()
-
-should_scan = scan_clicked or st.session_state.get("do_scan", False)
+should_scan    = scan_clicked or st.session_state["do_scan"]
 st.session_state["do_scan"] = False
 
 if should_scan and not active_keyword:
@@ -462,20 +422,19 @@ if st.session_state.results:
     kw         = st.session_state.last_keyword
     post_count = st.session_state.post_count
 
-    st.markdown(f"""
-<div style="display:flex; justify-content:space-between; align-items:center;
-            margin-top:2rem; margin-bottom:1rem;">
-    <p style="color:#6B7280; font-weight:600; font-size:1rem; margin:0;">
-        Top opportunities for
-        '<strong style="color:#111827;">{kw}</strong>'
-    </p>
-    <p style="color:#9CA3AF; font-size:0.82rem; margin:0;">
-        {post_count} posts · AI-estimated scores
-    </p>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="display:flex; justify-content:space-between; '
+        f'align-items:center; margin-top:2rem; margin-bottom:1rem;">'
+        f'<p style="color:#6B7280; font-weight:600; font-size:1rem; margin:0;">'
+        f'Top opportunities for '
+        f'\'<strong style="color:#111827;">{kw}</strong>\''
+        f'</p>'
+        f'<p style="color:#9CA3AF; font-size:0.82rem; margin:0;">'
+        f'{post_count} posts · AI-estimated scores</p>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
-    # Summary table
     rows_html = ""
     for i, r in enumerate(results):
         is_top      = i == 0
@@ -493,34 +452,22 @@ if st.session_state.results:
             f'</tr>'
         )
 
-    st.markdown(f"""
-<div style="border:1px solid #E5E7EB; border-radius:12px; overflow:hidden;
-            background:#FFFFFF; margin-bottom:1.25rem;
-            box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-  <table style="width:100%; border-collapse:collapse;">
-    <thead>
-      <tr style="background:#F9FAFB; border-bottom:2px solid #E5E7EB;">
-        <th style="padding:0.65rem 1rem; text-align:left; font-size:0.72rem;
-                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em;
-                   font-weight:700;">Rank</th>
-        <th style="padding:0.65rem 1rem; text-align:left; font-size:0.72rem;
-                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em;
-                   font-weight:700;">Pain Point</th>
-        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem;
-                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em;
-                   font-weight:700;">Demand</th>
-        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem;
-                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em;
-                   font-weight:700;">Difficulty</th>
-        <th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem;
-                   color:#6B7280; text-transform:uppercase; letter-spacing:0.06em;
-                   font-weight:700;">Opportunity</th>
-      </tr>
-    </thead>
-    <tbody>{rows_html}</tbody>
-  </table>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="border:1px solid #E5E7EB; border-radius:12px; overflow:hidden; '
+        f'background:#FFFFFF; margin-bottom:1.25rem; '
+        f'box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+        f'<table style="width:100%; border-collapse:collapse;">'
+        f'<thead><tr style="background:#F9FAFB; border-bottom:2px solid #E5E7EB;">'
+        f'<th style="padding:0.65rem 1rem; text-align:left; font-size:0.72rem; color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Rank</th>'
+        f'<th style="padding:0.65rem 1rem; text-align:left; font-size:0.72rem; color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Pain Point</th>'
+        f'<th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem; color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Demand</th>'
+        f'<th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem; color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Difficulty</th>'
+        f'<th style="padding:0.65rem 1rem; text-align:center; font-size:0.72rem; color:#6B7280; text-transform:uppercase; letter-spacing:0.06em; font-weight:700;">Opportunity</th>'
+        f'</tr></thead>'
+        f'<tbody>{rows_html}</tbody>'
+        f'</table></div>',
+        unsafe_allow_html=True
+    )
 
     df  = pd.DataFrame(results)
     csv = df.to_csv(index=False)
@@ -537,41 +484,39 @@ if st.session_state.results:
     )
 
     for i, item in enumerate(results):
-        is_top   = i == 0
-        rank_cls = RANK_CLASSES[min(i, 4)]
-        card_cls = "pain-card top-pick" if is_top else f"pain-card {rank_cls}"
-        badge    = "✨ TOP OPPORTUNITY" if is_top else f"#{i+1}"
+        is_top    = i == 0
+        rank_cls  = RANK_CLASSES[min(i, 4)]
+        card_cls  = "pain-card top-pick" if is_top else f"pain-card {rank_cls}"
+        badge     = "✨ TOP OPPORTUNITY" if is_top else f"#{i+1}"
         title_cls = f"card-title {rank_cls}".strip()
 
-        st.markdown(f"""
-<div class="{card_cls}">
-<p style="font-size:0.75rem; font-weight:700; color:#9CA3AF;
-          margin-bottom:0.5rem; letter-spacing:0.05em;">{badge}</p>
-<h3 class="{title_cls}">{item['pain_point']}</h3>
-<p class="card-desc">{item['description']}</p>
-<div class="metric-container">
-  <span class="metric-pill {pill_class(item['demand_score'])}">
-    Demand: {item['demand_score']}/10</span>
-  <span class="metric-pill {pill_class(item['difficulty_score'], invert=True)}">
-    Difficulty: {item['difficulty_score']}/10</span>
-  <span class="metric-pill {pill_class(item['opportunity_score'])}">
-    Score: {item['opportunity_score']}/10</span>
-  <span class="ai-note">Gemini · {post_count} posts</span>
-</div>
-<div class="app-solution">
-  <p class="app-solution-title">The Missing Tool</p>
-  <p class="app-solution-text">{item['app_idea']}</p>
-</div>
-<p class="evidence-quote">"{item['evidence']}"</p>
-</div>
-""", unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="{card_cls}">'
+            f'<p style="font-size:0.75rem; font-weight:700; color:#9CA3AF; '
+            f'margin-bottom:0.5rem; letter-spacing:0.05em;">{badge}</p>'
+            f'<h3 class="{title_cls}">{item["pain_point"]}</h3>'
+            f'<p class="card-desc">{item["description"]}</p>'
+            f'<div class="metric-container">'
+            f'<span class="metric-pill {pill_class(item["demand_score"])}">Demand: {item["demand_score"]}/10</span>'
+            f'<span class="metric-pill {pill_class(item["difficulty_score"], invert=True)}">Difficulty: {item["difficulty_score"]}/10</span>'
+            f'<span class="metric-pill {pill_class(item["opportunity_score"])}">Score: {item["opportunity_score"]}/10</span>'
+            f'<span class="ai-note">Gemini · {post_count} posts</span>'
+            f'</div>'
+            f'<div class="app-solution">'
+            f'<p class="app-solution-title">The Missing Tool</p>'
+            f'<p class="app-solution-text">{item["app_idea"]}</p>'
+            f'</div>'
+            f'<p class="evidence-quote">"{item["evidence"]}"</p>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
     _, mid, _ = st.columns([1, 2, 1])
     with mid:
         if st.button("New Search", type="secondary", use_container_width=True):
-            st.session_state.results = None
-            st.session_state["kw"]   = ""
+            st.session_state.results    = None
+            st.session_state["pending_kw"] = ""
             st.rerun()
 
 # ============================================================

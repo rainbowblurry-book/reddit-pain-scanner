@@ -502,6 +502,51 @@ if not st.session_state.results:
             )
 
     st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+        # Divider
+    st.markdown(
+        '<hr style="border:none; border-top:1px solid #E5E7EB; margin:2rem 0;">',
+        unsafe_allow_html=True
+    )
+
+    # How to use the output
+    st.markdown(
+        '<p style="text-align:center; font-weight:700; color:#111827; font-size:1rem; margin-bottom:0.35rem;">From scan to product in 4 steps</p>'
+        '<p style="text-align:center; color:#9CA3AF; font-size:0.82rem; margin-bottom:1.75rem;">How people actually use Pain Radar to go from idea to build</p>',
+        unsafe_allow_html=True
+    )
+
+    steps_flow = [
+        ("01", "#111827", "Scan your niche",
+         "Type any topic — a hobby, industry, or problem space. Pain Radar fetches 40 real Reddit posts from the past year and extracts the top 5 frustrations people are actually expressing."),
+        ("02", "#111827", "Read the opportunity scores",
+         "Each pain point gets three scores: Demand (how often people complain about it), Difficulty (how hard it is to build a solution), and Opportunity (the overall product gap score). High demand + low difficulty = green light."),
+        ("03", "#111827", "Read the Missing Tool",
+         "Each card describes a specific product idea grounded in the pain. This is your starting brief — not a vague category, but a concrete tool with a defined user and problem. Copy it, refine it, make it yours."),
+        ("04", "#111827", "Download and validate",
+         "Hit Download CSV to save all 5 pain points with their scores. Take the top result and search for it on Google, Product Hunt, and the App Store. If nothing exists — or what exists is bad — you have your idea."),
+    ]
+
+    for step in steps_flow:
+        num, color, title, desc = step
+        st.markdown(
+            f'<div style="display:flex; gap:1.25rem; align-items:flex-start; padding:1.25rem; background:#FFFFFF; border:1px solid #E5E7EB; border-radius:12px; margin-bottom:0.75rem; box-shadow:0 1px 3px rgba(0,0,0,0.03);">'
+            f'<div style="min-width:2.25rem; height:2.25rem; background:#111827; color:#FFFFFF; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:800; flex-shrink:0;">{num}</div>'
+            f'<div>'
+            f'<p style="font-weight:700; color:#111827; font-size:0.95rem; margin:0 0 0.3rem 0;">{title}</p>'
+            f'<p style="color:#4B5563; font-size:0.875rem; margin:0; line-height:1.6;">{desc}</p>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+    # Final CTA nudge
+    st.markdown(
+        '<div style="background:#111827; border-radius:12px; padding:1.75rem; text-align:center; margin-top:1.5rem;">'
+        '<p style="color:#FFFFFF; font-weight:800; font-size:1.1rem; margin:0 0 0.5rem 0;">Ready to find your next idea?</p>'
+        '<p style="color:#9CA3AF; font-size:0.875rem; margin:0;">Type any topic above and hit Scan Reddit. Takes about 15 seconds.</p>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 # ============================================================
 # 8. API KEY WARNING
 # ============================================================

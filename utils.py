@@ -15,7 +15,7 @@ from google.genai import types
 # Resets automatically each new calendar day.
 # Cap is set below 250 to leave buffer for retries.
 # ============================================================
-DAILY_CAP       = 180
+DAILY_CAP       = 200
 COUNTER_FILE    = "/tmp/curiosity_radar_counter.json"
 
 def _load_counter():

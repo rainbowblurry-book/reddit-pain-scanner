@@ -1,23 +1,24 @@
-import streamlit as st
+import os
+import time
+import html
+import base64
+from io import BytesIO
+
 import pandas as pd
+import streamlit as st
+from PIL import Image, ImageChops
+
 from utils import (
     fetch_reddit_posts,
     analyse_pain_points,
     is_daily_cap_reached,
     daily_scans_remaining,
 )
-import time
-import os
-import base64
-
-def _img_to_b64(path: str) -> str:
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
 
 # ============================================================
 # ASSETS
 # ============================================================
-LOGO_PATH        = "assets/logo.png"
+LOGO_PATH = "assets/logo.png"
 EMPTY_STATE_PATH = "assets/empty_state.png"
 
 # ============================================================
@@ -27,7 +28,7 @@ st.set_page_config(
     page_title="Curiosity Radar — Discover what to build",
     page_icon="📡",
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
 # ============================================================
@@ -39,7 +40,9 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    .stApp { background-color: #FFFEF9; }
+    .stApp {
+        background: #FFFEF9;
+    }
 
     html, body, [class*="css"] {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -49,138 +52,363 @@ st.markdown("""
     }
 
     [data-testid="block-container"] {
-        max-width: 780px !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-        padding-top: 0 !important;
+        max-width: 860px !important;
+        padding-top: 0.5rem !important;
+        padding-left: 1.35rem !important;
+        padding-right: 1.35rem !important;
+        overflow-x: hidden !important;
+    }
+
+    @media (max-width: 768px) {
+        [data-testid="block-container"] {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+    }
+
+    .logo-shell {
+        display: flex;
+        justify-content: center;
+        margin-top: 0.8rem;
+        margin-bottom: 1.15rem;
+    }
+
+    .logo-card {
+        background: rgba(255,255,255,0.9);
+        border: 1px solid #F1E9DD;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(26, 26, 46, 0.06);
+        padding: 0.8rem 1rem;
+    }
+
+    .hero-wrap {
+        text-align: center;
+        padding: 0.5rem 0 0.5rem 0;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: #FFF7ED;
+        border: 1.5px solid #FED7AA;
+        border-radius: 999px;
+        padding: 0.42rem 1rem;
+        margin-bottom: 1.15rem;
+        color: #C2410C;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+    }
+
+    .hero-title {
+        margin: 0 0 0.85rem 0;
+        font-size: clamp(2.35rem, 6vw, 4.15rem);
+        line-height: 1.05;
+        letter-spacing: -0.045em;
+        font-weight: 850;
+        color: #17172F;
+        text-wrap: balance;
+    }
+
+    .hero-subtitle {
+        max-width: 650px;
+        margin: 0 auto 1.75rem auto;
+        color: #737390;
+        font-size: 1.08rem;
+        line-height: 1.7;
+    }
+
+    .section-kicker {
+        text-align: center;
+        color: #B8B0A4;
+        font-size: 0.82rem;
+        margin: 1rem 0 0.65rem 0;
+    }
+
+    .mini-heading {
+        text-align: center;
+        margin: 2rem 0 0.25rem 0;
+        font-weight: 800;
+        color: #1A1A2E;
+        font-size: 1rem;
+    }
+
+    .mini-subheading {
+        text-align: center;
+        margin: 0 0 1rem 0;
+        color: #B8B0A4;
+        font-size: 0.82rem;
+    }
+
+    .step-card {
+        background: #FFFFFF;
+        border: 1.5px solid #F0EBE3;
+        border-radius: 18px;
+        padding: 1.25rem 1rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        min-height: 175px;
+    }
+
+    .step-icon {
+        font-size: 1.7rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .step-title {
+        margin: 0 0 0.35rem 0;
+        font-weight: 800;
+        color: #1A1A2E;
+        font-size: 0.96rem;
+    }
+
+    .step-desc {
+        margin: 0;
+        color: #7A7A9A;
+        font-size: 0.84rem;
+        line-height: 1.55;
+    }
+
+    .example-card {
+        position: relative;
+        background: #FFFFFF;
+        border: 1.5px solid #F0EBE3;
+        border-radius: 18px;
+        padding: 1.7rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+        margin-top: 0.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .example-tag {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: #F5F0E8;
+        border: 1px solid #E8E4DC;
+        border-radius: 999px;
+        padding: 0.2rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: #B8B0A4;
+        letter-spacing: 0.05em;
+    }
+
+    .top-opportunity {
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #C2410C;
+        letter-spacing: 0.06em;
+        margin: 0 0 0.4rem 0;
+    }
+
+    .example-title {
+        margin: 0 0 0.6rem 0;
+        color: #1A1A2E;
+        font-size: 1.3rem;
+        line-height: 1.28;
+        font-weight: 850;
+    }
+
+    .example-desc {
+        margin: 0 0 1rem 0;
+        color: #4A4A6A;
+        font-size: 0.96rem;
+        line-height: 1.65;
+    }
+
+    .metric-row {
+        display: flex;
+        gap: 0.55rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+
+    .solution-box {
+        background: #FFF7ED;
+        border-left: 4px solid #F97316;
+        border-radius: 0 12px 12px 0;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .solution-label {
+        margin: 0 0 0.28rem 0;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 800;
+        color: #C2410C;
+    }
+
+    .solution-text {
+        margin: 0;
+        color: #1A1A2E;
+        font-weight: 650;
+        font-size: 0.96rem;
+        line-height: 1.55;
+    }
+
+    .evidence {
+        margin: 0;
+        font-size: 0.87rem;
+        color: #7A7A9A;
+        font-style: italic;
+        line-height: 1.6;
+        padding-left: 0.75rem;
+        border-left: 2px solid #E8E4DC;
+    }
+
+    .cap-banner {
+        background: #FEF9C3;
+        border: 1.5px solid #FEF08A;
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+        color: #854D0E;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    .subtle-footer {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #C4BDB5;
+        margin-top: 3.75rem;
+        padding-bottom: 2rem;
+        line-height: 1.8;
     }
 
     .stTextInput > div > div > input {
-        border-radius: 10px !important;
+        border-radius: 14px !important;
         border: 1.5px solid #E8E4DC !important;
-        padding: 0.9rem 1.25rem !important;
-        font-size: 1.05rem !important;
+        padding: 0.95rem 1.15rem !important;
+        font-size: 1.02rem !important;
         background-color: #FFFFFF !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
     }
+
     .stTextInput > div > div > input:focus {
         border-color: #F97316 !important;
         box-shadow: 0 0 0 3px rgba(249,115,22,0.12) !important;
     }
+
     .stTextInput > div > div > input::placeholder {
         color: #B8B0A4 !important;
     }
 
-    .stButton > button[kind="primary"] {
+    .stButton > button[kind="primary"],
+    .stFormSubmitButton > button {
         background: linear-gradient(135deg, #F97316, #EA580C) !important;
         color: #FFFFFF !important;
-        border-radius: 10px !important;
+        border-radius: 14px !important;
         border: none !important;
-        font-weight: 700 !important;
-        padding: 0.9rem !important;
+        font-weight: 800 !important;
+        padding: 0.9rem 1rem !important;
         font-size: 1rem !important;
-        box-shadow: 0 4px 12px rgba(249,115,22,0.25) !important;
-        transition: all 0.2s ease !important;
+        box-shadow: 0 6px 16px rgba(249,115,22,0.24) !important;
+        transition: all 0.18s ease !important;
     }
-    .stButton > button[kind="primary"]:hover {
+
+    .stButton > button[kind="primary"]:hover,
+    .stFormSubmitButton > button:hover {
         transform: translateY(-1px) !important;
-        box-shadow: 0 6px 16px rgba(249,115,22,0.35) !important;
+        box-shadow: 0 8px 20px rgba(249,115,22,0.30) !important;
     }
 
     .stButton > button[kind="secondary"] {
-        background-color: #1A1A2E !important;
+        background: #17172F !important;
         color: #FFFFFF !important;
-        border-radius: 10px !important;
+        border-radius: 14px !important;
         border: none !important;
-        font-weight: 600 !important;
-        padding: 0.8rem 1.5rem !important;
+        font-weight: 700 !important;
+        padding: 0.85rem 0.8rem !important;
+        line-height: 1.2 !important;
+        white-space: normal !important;
+        min-height: 56px !important;
+        transition: all 0.15s ease !important;
     }
+
     .stButton > button[kind="secondary"]:hover {
-        background-color: #2D2D44 !important;
+        background: #222244 !important;
         transform: translateY(-1px) !important;
     }
 
     .stDownloadButton > button {
-        background-color: #FFFFFF !important;
+        background: #FFFFFF !important;
         color: #4A4A6A !important;
         border: 1.5px solid #E8E4DC !important;
-        border-radius: 10px !important;
-        font-weight: 500 !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        padding: 0.8rem 1rem !important;
     }
+
     .stDownloadButton > button:hover {
         border-color: #F97316 !important;
         color: #F97316 !important;
     }
 
-    /* Pill buttons */
-div[data-testid="stButton"] button {
-    background-color: #FFF7ED !important;
-    color: #C2410C !important;
-    border-radius: 999px !important;
-    border: 1.5px solid #FED7AA !important;
-    font-size: 0.78rem !important;
-    font-weight: 500 !important;
-    padding: 0.3rem 0.65rem !important;
-    transition: all 0.15s ease !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    min-width: 0 !important;
-}
-    div[data-testid="stButton"] button:hover {
-        background-color: #F97316 !important;
-        color: #FFFFFF !important;
-        border-color: #F97316 !important;
-    }
-    .stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #F97316, #EA580C) !important;
-        color: #FFFFFF !important;
-        border-radius: 10px !important;
-        border: none !important;
-        padding: 0.9rem !important;
-        font-size: 1rem !important;
-    }
-    .stButton > button[kind="secondary"] {
-        background-color: #1A1A2E !important;
-        color: #FFFFFF !important;
-        border-radius: 10px !important;
-        border: none !important;
-    }
-
-    /* Cards */
-    .step-card {
-        background: #FFFFFF;
+    .results-table-wrap {
         border: 1.5px solid #F0EBE3;
         border-radius: 14px;
-        padding: 1.5rem 1.25rem;
-        text-align: center;
+        overflow: hidden;
+        background: #FFFFFF;
+        margin-bottom: 1rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .results-table thead tr {
+        background: #FAFAF7;
+        border-bottom: 2px solid #F0EBE3;
+    }
+
+    .results-table th {
+        padding: 0.65rem 1rem;
+        font-size: 0.7rem;
+        color: #B8B0A4;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        font-weight: 800;
+        text-align: left;
+    }
+
+    .results-table th.center,
+    .results-table td.center {
+        text-align: center;
+    }
+
+    .results-table td {
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid #F5F0E8;
+        vertical-align: middle;
+        font-size: 0.88rem;
     }
 
     .pain-card {
         background: #FFFFFF;
         border: 1.5px solid #F0EBE3;
-        border-radius: 14px;
-        padding: 2rem;
-        margin-bottom: 1.25rem;
+        border-radius: 18px;
+        padding: 1.6rem;
+        margin-bottom: 1.2rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
-    .pain-card:hover {
-        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-        transform: translateY(-1px);
-    }
+
     .pain-card.top-pick {
-        border: none;
         background: #FFFEF9;
         position: relative;
         z-index: 0;
+        border: none;
     }
+
     .pain-card.top-pick::before {
         content: "";
         position: absolute;
         inset: 0;
-        border-radius: 14px;
+        border-radius: 18px;
         padding: 2px;
         background: linear-gradient(135deg, #F97316, #8B5CF6, #F97316, #8B5CF6);
         background-size: 300% 300%;
@@ -192,76 +420,75 @@ div[data-testid="stButton"] button {
         mask-composite: exclude;
         z-index: -1;
     }
+
     @keyframes borderSpin {
         0%   { background-position: 0% 50%; }
         50%  { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
-    .pain-card.rank-2 { opacity: 0.97; }
-    .pain-card.rank-3 { opacity: 0.94; }
-    .pain-card.rank-4 { opacity: 0.91; }
-    .pain-card.rank-5 { opacity: 0.88; }
+
+    .rank-label {
+        margin: 0 0 0.4rem 0;
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #C2410C;
+        letter-spacing: 0.06em;
+    }
 
     .card-title {
-        font-size: 1.4rem;
-        font-weight: 800;
+        margin: 0 0 0.55rem 0;
+        font-size: 1.35rem;
+        font-weight: 850;
         color: #1A1A2E;
-        margin: 0 0 0.6rem 0;
-        line-height: 1.3;
+        line-height: 1.28;
     }
-    .card-title.rank-2 { font-size: 1.25rem; }
-    .card-title.rank-3 { font-size: 1.15rem; }
-    .card-title.rank-4 { font-size: 1.1rem; }
-    .card-title.rank-5 { font-size: 1.05rem; }
 
     .card-desc {
-        font-size: 0.97rem;
+        margin: 0 0 1rem 0;
         color: #4A4A6A;
-        margin: 0 0 1.1rem 0;
+        font-size: 0.97rem;
         line-height: 1.65;
     }
 
-    .app-solution {
-        background: #FFF7ED;
-        border-left: 4px solid #F97316;
-        border-radius: 0 10px 10px 0;
-        padding: 1.1rem 1.25rem;
-        margin-bottom: 1rem;
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin: 1.5rem 0 1rem 0;
+        flex-wrap: wrap;
     }
-    .app-solution-label {
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
+
+    .results-left {
+        color: #7A7A9A;
         font-weight: 700;
-        color: #C2410C;
+        font-size: 0.96rem;
+        margin: 0;
+    }
+
+    .results-right {
+        color: #B8B0A4;
+        font-size: 0.82rem;
+        margin: 0;
+    }
+
+    .empty-state-copy {
+        text-align: center;
+        padding: 1rem 0;
+    }
+
+    .empty-state-copy .title {
+        font-weight: 800;
+        color: #1A1A2E;
+        font-size: 1rem;
         margin: 0 0 0.35rem 0;
     }
-    .app-solution-text {
-        font-size: 0.97rem;
-        font-weight: 600;
-        color: #1A1A2E;
+
+    .empty-state-copy .desc {
+        color: #7A7A9A;
+        font-size: 0.92rem;
         margin: 0;
-        line-height: 1.5;
-    }
-
-    .subtle-footer {
-        text-align: center;
-        font-size: 0.78rem;
-        color: #C4BDB5;
-        margin-top: 4rem;
-        padding-bottom: 2rem;
-        line-height: 1.8;
-    }
-
-    .cap-banner {
-        background: #FEF9C3;
-        border: 1.5px solid #FEF08A;
-        border-radius: 10px;
-        padding: 0.75rem 1.25rem;
-        font-size: 0.88rem;
-        color: #854D0E;
-        margin-bottom: 1rem;
-        text-align: center;
+        line-height: 1.6;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -270,48 +497,126 @@ div[data-testid="stButton"] button {
 # SESSION STATE
 # ============================================================
 defaults = {
-    "results":        None,
-    "last_keyword":   "",
-    "last_scan_time": 0,
-    "post_count":     0,
-    "pending_kw":     "",
-    "do_scan":        False,
+    "results": None,
+    "last_keyword": "",
+    "last_scan_time": 0.0,
+    "post_count": 0,
 }
-for k, v in defaults.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
-API_KEY          = st.secrets.get("GEMINI_API_KEY", "")
+# ============================================================
+# CONFIG
+# ============================================================
+API_KEY = st.secrets.get("GEMINI_API_KEY", "")
 COOLDOWN_SECONDS = 30
-RANK_CLASSES     = ["", "rank-2", "rank-3", "rank-4", "rank-5"]
+
+EXAMPLE_QUERIES = [
+    ("🥖 Sourdough", "sourdough baking"),
+    ("🏃 Marathon", "marathon training"),
+    ("💻 Remote work", "remote work"),
+    ("🗣️ Language", "language learning"),
+    ("😴 Sleep", "sleep tracking"),
+    ("💸 Finance", "personal finance"),
+]
 
 # ============================================================
 # HELPERS
 # ============================================================
-def mpill(score, invert=False):
-    if invert:
-        if score >= 8: return "mp-red"
-        if score >= 5: return "mp-yellow"
-        return "mp-green"
-    if score >= 8: return "mp-green"
-    if score >= 5: return "mp-yellow"
-    return "mp-red"
+def safe(text):
+    return html.escape(str(text)) if text is not None else ""
 
-def pill_colors(cls):
-    return {
-        "mp-green":  ("#DCFCE7", "#166534"),
-        "mp-yellow": ("#FEF9C3", "#854D0E"),
-        "mp-red":    ("#FEE2E2", "#991B1B"),
-    }[cls]
+def pill_bucket(score, invert=False):
+    if invert:
+        if score >= 8:
+            return ("#FEE2E2", "#991B1B", "#FECACA")
+        if score >= 5:
+            return ("#FEF9C3", "#854D0E", "#FDE68A")
+        return ("#DCFCE7", "#166534", "#BBF7D0")
+    if score >= 8:
+        return ("#DCFCE7", "#166534", "#BBF7D0")
+    if score >= 5:
+        return ("#FEF9C3", "#854D0E", "#FDE68A")
+    return ("#FEE2E2", "#991B1B", "#FECACA")
 
 def score_pill_html(label, score, invert=False):
-    cls    = mpill(score, invert)
-    bg, fg = pill_colors(cls)
+    bg, fg, border = pill_bucket(score, invert)
     return (
-        f'<span style="background:{bg};color:{fg};border-radius:999px;'
-        f'padding:0.3rem 0.85rem;font-size:0.8rem;font-weight:700;'
-        f'border:1.5px solid {bg};">{label} {score}/10</span>'
+        f'<span style="background:{bg};color:{fg};border:1.5px solid {border};'
+        f'border-radius:999px;padding:0.3rem 0.8rem;font-size:0.8rem;'
+        f'font-weight:800;">{safe(label)} {safe(score)}/10</span>'
     )
+
+def crop_logo_to_b64(path):
+    img = Image.open(path).convert("RGBA")
+
+    alpha = img.getchannel("A")
+    alpha_bbox = alpha.getbbox()
+    if alpha_bbox:
+        img = img.crop(alpha_bbox)
+
+    rgb = img.convert("RGB")
+    bg_color = rgb.getpixel((0, 0))
+    bg = Image.new("RGB", rgb.size, bg_color)
+    diff = ImageChops.difference(rgb, bg)
+    diff = ImageChops.add(diff, diff, 2.0, -18)
+    bbox = diff.getbbox()
+    if bbox:
+        img = img.crop(bbox)
+
+    max_w, max_h = 280, 88
+    scale = min(max_w / max(img.width, 1), max_h / max(img.height, 1))
+    new_size = (
+        max(1, int(img.width * scale)),
+        max(1, int(img.height * scale)),
+    )
+    img = img.resize(new_size, Image.LANCZOS)
+
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode()
+
+def render_logo():
+    if os.path.exists(LOGO_PATH):
+        try:
+            logo_b64 = crop_logo_to_b64(LOGO_PATH)
+            st.markdown(
+                f"""
+                <div class="logo-shell">
+                    <div class="logo-card">
+                        <img src="data:image/png;base64,{logo_b64}"
+                             alt="Curiosity Radar logo"
+                             style="display:block;margin:auto;max-width:280px;width:100%;height:auto;">
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        except Exception:
+            _, c, _ = st.columns([1.2, 1, 1.2])
+            with c:
+                st.image(LOGO_PATH, width=220)
+    else:
+        st.markdown(
+            '<div style="text-align:center;font-size:2rem;margin-top:1rem;margin-bottom:0.5rem;">📡</div>',
+            unsafe_allow_html=True,
+        )
+
+def render_daily_cap():
+    remaining = daily_scans_remaining()
+    if is_daily_cap_reached():
+        st.markdown("""
+        <div class="cap-banner">
+            ⚠️ Daily scan limit reached — this free tool has limited capacity.
+            Check back tomorrow, or add your own Gemini API key below.
+        </div>
+        """, unsafe_allow_html=True)
+    elif remaining <= 30:
+        st.markdown(
+            f'<div class="cap-banner">⚡ {remaining} free scans remaining today.</div>',
+            unsafe_allow_html=True,
+        )
 
 def run_scan(keyword):
     elapsed = time.time() - st.session_state.last_scan_time
@@ -324,399 +629,329 @@ def run_scan(keyword):
     status.info(f"📡 Scanning Reddit for '{keyword}'…")
     posts = fetch_reddit_posts(keyword)
 
-    if posts:
-        status.info(f"🤖 Analysing {len(posts)} posts with Gemini…")
-        results = analyse_pain_points(keyword, posts, API_KEY)
+    if not posts:
         status.empty()
+        st.session_state.results = []
+        st.session_state.last_keyword = keyword
+        st.session_state.post_count = 0
+        return
 
-        if results is not None:
-            st.session_state.results        = sorted(
-                results,
-                key=lambda x: x.get("opportunity_score", 0),
-                reverse=True
-            )
-            st.session_state.last_keyword   = keyword
-            st.session_state.last_scan_time = time.time()
-            st.session_state.post_count     = len(posts)
-    else:
-        status.empty()
+    status.info(f"🤖 Analysing {len(posts)} posts with Gemini…")
+    results = analyse_pain_points(keyword, posts, API_KEY)
+    status.empty()
 
-# ============================================================
-# LOGO
-# ============================================================
-if os.path.exists(LOGO_PATH):
-    st.markdown(
-        f'<div style="text-align:center; padding-top:2rem;">'
-        f'<img src="data:image/png;base64,{_img_to_b64(LOGO_PATH)}"'
-        f' style="height:72px; width:auto;" /></div>',
-        unsafe_allow_html=True
-    )
-else:
-    st.markdown(
-        '<p style="text-align:center;font-size:1.5rem;'
-        'margin-top:2rem;">📡</p>',
-        unsafe_allow_html=True
+    if results is None:
+        st.error("Analysis failed. Please try again.")
+        return
+
+    results = sorted(
+        results,
+        key=lambda x: x.get("opportunity_score", 0),
+        reverse=True,
     )
 
+    st.session_state.results = results
+    st.session_state.last_keyword = keyword
+    st.session_state.last_scan_time = time.time()
+    st.session_state.post_count = len(posts)
+
+def maybe_handle_scan(keyword):
+    keyword = (keyword or "").strip()
+
+    if is_daily_cap_reached():
+        st.error(
+            "Daily scan limit reached — this free tool runs on a limited quota. "
+            "Check back tomorrow, or add your own Gemini API key in Streamlit secrets."
+        )
+        return
+
+    if not keyword:
+        st.error("Please enter a topic first.")
+        return
+
+    if not API_KEY:
+        st.error("No API key found. Add GEMINI_API_KEY to Streamlit secrets.")
+        return
+
+    run_scan(keyword)
+
 # ============================================================
-# DAILY CAP BANNER
+# TOP
 # ============================================================
-remaining = daily_scans_remaining()
-if is_daily_cap_reached():
-    st.markdown("""
-<div class="cap-banner">
-    ⚠️ Daily scan limit reached — this free tool has limited capacity.
-    Check back tomorrow, or add your own Gemini API key below.
-</div>
-""", unsafe_allow_html=True)
-elif remaining <= 30:
-    st.markdown(
-        f'<div class="cap-banner">'
-        f'⚡ {remaining} free scans remaining today.</div>',
-        unsafe_allow_html=True
-    )
+render_logo()
+render_daily_cap()
 
 has_results = bool(st.session_state.results)
 
 # ============================================================
-# SEARCH BAR — compact at top when results exist
+# SEARCH UI
 # ============================================================
-def on_enter():
-    st.session_state["do_scan"] = True
+scan_request = None
 
 if has_results:
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        keyword = st.text_input(
-            "keyword",
-            value=st.session_state["pending_kw"],
-            placeholder="Try another topic…",
-            label_visibility="collapsed",
-            on_change=on_enter
-        )
-        st.session_state["pending_kw"] = ""
-    with col2:
-        scan_clicked = st.button(
-            "Scan Reddit",
-            type="primary",
-            use_container_width=True
-        )
+    with st.form("top_search_form", clear_on_submit=True):
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            keyword_input = st.text_input(
+                "keyword",
+                placeholder="Try another topic…",
+                label_visibility="collapsed",
+            )
+        with col2:
+            submitted = st.form_submit_button("Scan Reddit", use_container_width=True)
+
+    if submitted:
+        scan_request = keyword_input
+
     st.markdown(
-        '<hr style="border:none;border-top:1px solid #F0EBE3;'
-        'margin:0.75rem 0;">',
-        unsafe_allow_html=True
+        '<hr style="border:none;border-top:1px solid #F0EBE3;margin:0.8rem 0 0.25rem 0;">',
+        unsafe_allow_html=True,
     )
 
 else:
-    # ---- HERO ----
     st.markdown("""
-<div style="text-align:center; padding:1.5rem 1rem 0.5rem 1rem;">
-    <div style="display:inline-block; background:#FFF7ED;
-                border:1.5px solid #FED7AA; border-radius:999px;
-                padding:0.3rem 1rem; margin-bottom:1.25rem;">
-        <span style="color:#C2410C; font-size:0.78rem; font-weight:700;
-                     letter-spacing:0.05em;">FREE TOOL FOR INDIE BUILDERS</span>
+    <div class="hero-wrap">
+        <div class="hero-badge">FREE TOOL FOR INDIE BUILDERS</div>
+        <h1 class="hero-title">Find what people actually want built</h1>
+        <p class="hero-subtitle">
+            Type any topic. Curiosity Radar scans Reddit for real frustrations
+            and turns them into ranked, buildable app ideas.
+        </p>
     </div>
-    <h1 style="font-size:2.8rem; font-weight:800; letter-spacing:-0.03em;
-               color:#1A1A2E; line-height:1.15; margin:0 0 1rem 0;">
-        Find what people<br>actually want built 📡
-    </h1>
-    <p style="color:#7A7A9A; font-size:1rem; max-width:420px;
-              margin:0 auto 2rem auto; line-height:1.7;">
-        Type any topic. Curiosity Radar scans Reddit for real frustrations
-        and turns them into ranked, buildable app ideas.
-    </p>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    # ---- HOW IT WORKS ----
     c1, c2, c3 = st.columns(3, gap="medium")
     steps = [
-        ("🔍", "Enter any topic",
-         "A hobby, niche, or industry. Anything people complain about."),
-        ("📡", "We scan Reddit",
-         "40 real posts from the past year, stripped of noise."),
-        ("💡", "Gemini ranks the gaps",
-         "Pain points scored by demand, difficulty, and opportunity."),
+        ("🔍", "Enter any topic", "A hobby, niche, or industry. Anything people complain about."),
+        ("📡", "We scan Reddit", "40 real posts from the past year, stripped of noise."),
+        ("💡", "Gemini ranks the gaps", "Pain points scored by demand, difficulty, and opportunity."),
     ]
+
     for col, (icon, title, desc) in zip([c1, c2, c3], steps):
         with col:
             st.markdown(
-                f'<div class="step-card">'
-                f'<div style="font-size:1.75rem;margin-bottom:0.6rem;">'
-                f'{icon}</div>'
-                f'<p style="font-weight:700;color:#1A1A2E;font-size:0.9rem;'
-                f'margin:0 0 0.35rem 0;">{title}</p>'
-                f'<p style="color:#7A7A9A;font-size:0.8rem;margin:0;'
-                f'line-height:1.55;">{desc}</p>'
-                f'</div>',
-                unsafe_allow_html=True
+                f"""
+                <div class="step-card">
+                    <div class="step-icon">{icon}</div>
+                    <p class="step-title">{safe(title)}</p>
+                    <p class="step-desc">{safe(desc)}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
-    # ---- EXAMPLE RESULT ----
-    st.markdown("""
-<div style="margin:2.5rem 0 0.5rem 0; text-align:center;">
-    <p style="font-weight:700;color:#1A1A2E;font-size:1rem;
-              margin:0 0 0.2rem 0;">Here's what a real result looks like</p>
-    <p style="color:#B8B0A4;font-size:0.82rem;margin:0;">
-        From the query <em>sourdough baking</em></p>
-</div>
-<div style="background:#FFFFFF;border:1.5px solid #F0EBE3;border-radius:14px;
-            padding:2rem;box-shadow:0 4px 16px rgba(0,0,0,0.06);
-            position:relative;">
-    <div style="position:absolute;top:1.1rem;right:1.25rem;
-                background:#F5F0E8;border:1px solid #E8E4DC;
-                border-radius:999px;padding:0.2rem 0.75rem;
-                font-size:0.72rem;font-weight:700;color:#B8B0A4;
-                letter-spacing:0.05em;">EXAMPLE</div>
-    <p style="font-size:0.72rem;font-weight:700;color:#C2410C;
-              letter-spacing:0.06em;margin:0 0 0.4rem 0;">✨ TOP OPPORTUNITY</p>
-    <h3 style="font-size:1.3rem;font-weight:800;color:#1A1A2E;
-               margin:0 0 0.6rem 0;line-height:1.3;">
-        No structured beginner learning path
-    </h3>
-    <p style="font-size:0.95rem;color:#4A4A6A;margin:0 0 1rem 0;line-height:1.65;">
-        New bakers feel overwhelmed by conflicting advice across forums,
-        YouTube, and blogs — with no single guided progression from first
-        loaf to advanced techniques.
-    </p>
-    <div style="display:flex;gap:0.6rem;margin-bottom:1rem;flex-wrap:wrap;">
-        <span style="background:#DCFCE7;color:#166534;border:1.5px solid #BBF7D0;
-                     padding:0.3rem 0.85rem;border-radius:999px;font-size:0.8rem;
-                     font-weight:700;">Demand 9/10</span>
-        <span style="background:#DCFCE7;color:#166534;border:1.5px solid #BBF7D0;
-                     padding:0.3rem 0.85rem;border-radius:999px;font-size:0.8rem;
-                     font-weight:700;">Difficulty 3/10</span>
-        <span style="background:#DCFCE7;color:#166534;border:1.5px solid #BBF7D0;
-                     padding:0.3rem 0.85rem;border-radius:999px;font-size:0.8rem;
-                     font-weight:700;">Opportunity 9/10</span>
-    </div>
-    <div style="background:#FFF7ED;border-left:4px solid #F97316;
-                border-radius:0 10px 10px 0;padding:1rem 1.25rem;
-                margin-bottom:1rem;">
-        <p style="font-size:0.72rem;text-transform:uppercase;
-                  letter-spacing:0.06em;font-weight:700;color:#C2410C;
-                  margin:0 0 0.3rem 0;">The Missing Tool</p>
-        <p style="font-size:0.95rem;font-weight:600;color:#1A1A2E;
-                  margin:0;line-height:1.5;">
-            A structured sourdough curriculum app — step-by-step from first
-            loaf to open crumb scoring, with progress tracking at each stage.
+    st.markdown(
+        '<p class="mini-heading">Here\'s what a real result looks like</p>'
+        '<p class="mini-subheading">From the query <em>sourdough baking</em></p>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(f"""
+    <div class="example-card">
+        <div class="example-tag">EXAMPLE</div>
+        <p class="top-opportunity">✨ TOP OPPORTUNITY</p>
+        <h3 class="example-title">No structured beginner learning path</h3>
+        <p class="example-desc">
+            New bakers feel overwhelmed by conflicting advice across forums,
+            YouTube, and blogs — with no single guided progression from first
+            loaf to advanced techniques.
+        </p>
+        <div class="metric-row">
+            {score_pill_html("Demand", 9)}
+            {score_pill_html("Difficulty", 3, invert=True)}
+            {score_pill_html("Opportunity", 9)}
+        </div>
+        <div class="solution-box">
+            <p class="solution-label">The Missing Tool</p>
+            <p class="solution-text">
+                A structured sourdough curriculum app — step-by-step from first
+                loaf to open crumb scoring, with progress tracking at each stage.
+            </p>
+        </div>
+        <p class="evidence">
+            "I've watched 50 YouTube videos and I still feel like I have no idea
+            what I'm doing. Is there any resource that walks you through this systematically?"
         </p>
     </div>
-    <p style="font-size:0.87rem;color:#7A7A9A;font-style:italic;margin:0;
-              line-height:1.6;padding-left:0.75rem;
-              border-left:2px solid #E8E4DC;">
-        "I've watched 50 YouTube videos and I still feel like I have no idea
-        what I'm doing. Is there any resource that walks you through this
-        systematically?"
-    </p>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    # ---- SEARCH BAR ----
     st.markdown(
-        '<div style="margin:2.5rem 0 0.75rem 0;text-align:center;">'
-        '<p style="font-weight:700;color:#1A1A2E;font-size:1rem;'
-        'margin:0 0 0.2rem 0;">Ready to find your niche? 👇</p>'
-        '<p style="color:#B8B0A4;font-size:0.82rem;margin:0;">'
-        'Takes about 15 seconds.</p>'
-        '</div>',
-        unsafe_allow_html=True
+        '<p class="mini-heading">Ready to find your niche? 👇</p>'
+        '<p class="mini-subheading">Takes about 15 seconds.</p>',
+        unsafe_allow_html=True,
     )
 
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        keyword = st.text_input(
-            "keyword",
-            value=st.session_state["pending_kw"],
-            placeholder="e.g. plant care, DnD, marathon training…",
-            label_visibility="collapsed",
-            on_change=on_enter
-        )
-        st.session_state["pending_kw"] = ""
-    with col2:
-        scan_clicked = st.button(
-            "Scan Reddit",
-            type="primary",
-            use_container_width=True
-        )
+    with st.form("hero_search_form", clear_on_submit=False):
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            keyword_input = st.text_input(
+                "keyword",
+                placeholder="e.g. plant care, DnD, marathon training…",
+                label_visibility="collapsed",
+            )
+        with col2:
+            submitted = st.form_submit_button("Scan Reddit", use_container_width=True)
 
-    # ---- PILLS ----
+    if submitted:
+        scan_request = keyword_input
+
     st.markdown(
-        '<p style="text-align:center;color:#B8B0A4;font-size:0.78rem;'
-        'margin:1rem 0 0.5rem 0;">— or try one of these —</p>',
-        unsafe_allow_html=True
+        '<p class="section-kicker">— or start with an example —</p>',
+        unsafe_allow_html=True,
     )
-    examples = [
-        "sourdough baking", "marathon training", "remote work",
-        "language learning", "sleep tracking", "personal finance",
-    ]
-    ex_cols = st.columns(len(examples), gap="small")
-for col, ex in zip(ex_cols, examples):
-    with col:
-        if st.button(ex, key=f"ex_{ex}"):
-                st.session_state["pending_kw"] = ex
-                st.session_state["do_scan"]    = True
-                st.rerun()
+
+    top_row = EXAMPLE_QUERIES[:3]
+    bottom_row = EXAMPLE_QUERIES[3:]
+
+    row1 = st.columns(3, gap="small")
+    for col, (label, query) in zip(row1, top_row):
+        with col:
+            if st.button(label, key=f"example_{query}", type="secondary", use_container_width=True):
+                scan_request = query
+
+    row2 = st.columns(3, gap="small")
+    for col, (label, query) in zip(row2, bottom_row):
+        with col:
+            if st.button(label, key=f"example2_{query}", type="secondary", use_container_width=True):
+                scan_request = query
 
 # ============================================================
-# SCAN EXECUTION
+# EXECUTE SCAN
 # ============================================================
-active_keyword = keyword.strip()
-should_scan    = scan_clicked or st.session_state["do_scan"]
-st.session_state["do_scan"] = False
-
-if should_scan and is_daily_cap_reached():
-    st.error(
-        "Daily scan limit reached — this free tool runs on a limited quota. "
-        "Check back tomorrow, or add your own Gemini API key in Streamlit secrets."
-    )
-elif should_scan and not active_keyword:
-    st.error("Please enter a topic first.")
-elif should_scan and not API_KEY:
-    st.error("No API key found. Add GEMINI_API_KEY to Streamlit secrets.")
-elif should_scan and active_keyword and API_KEY:
-    run_scan(active_keyword)
+if scan_request is not None:
+    maybe_handle_scan(scan_request)
 
 # ============================================================
 # RESULTS
 # ============================================================
 if st.session_state.results is not None and len(st.session_state.results) == 0:
     if os.path.exists(EMPTY_STATE_PATH):
-        _, img_col, _ = st.columns([1, 2, 1])
+        _, img_col, _ = st.columns([1, 1.6, 1])
         with img_col:
             st.image(EMPTY_STATE_PATH, use_container_width=True)
+
     st.markdown("""
-<div style="text-align:center;padding:1rem 0;">
-    <p style="font-weight:700;color:#1A1A2E;font-size:1rem;
-              margin:0 0 0.35rem 0;">No clear pain points found</p>
-    <p style="color:#7A7A9A;font-size:0.9rem;margin:0;">
-        Try something more specific —
-        like <em>sourdough starter problems</em>
-        instead of <em>sourdough</em>.
-    </p>
-</div>
-""", unsafe_allow_html=True)
+    <div class="empty-state-copy">
+        <p class="title">No clear pain points found</p>
+        <p class="desc">
+            Try something more specific — like <em>sourdough starter problems</em>
+            instead of <em>sourdough</em>.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 if st.session_state.results:
-    results    = st.session_state.results
-    kw         = st.session_state.last_keyword
+    results = st.session_state.results
+    kw = st.session_state.last_keyword
     post_count = st.session_state.post_count
 
     st.markdown(
-        f'<div style="display:flex;justify-content:space-between;'
-        f'align-items:center;margin:1.5rem 0 1rem 0;">'
-        f'<p style="color:#7A7A9A;font-weight:600;font-size:0.95rem;margin:0;">'
-        f'Top opportunities for '
-        f'<strong style="color:#1A1A2E;">{kw}</strong></p>'
-        f'<p style="color:#B8B0A4;font-size:0.8rem;margin:0;">'
-        f'{post_count} posts · AI-estimated</p>'
-        f'</div>',
-        unsafe_allow_html=True
+        f"""
+        <div class="results-header">
+            <p class="results-left">
+                Top opportunities for <strong style="color:#1A1A2E;">{safe(kw)}</strong>
+            </p>
+            <p class="results-right">{safe(post_count)} posts · AI-estimated</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    # Summary table
     rows_html = ""
-    for i, r in enumerate(results):
-        is_top      = i == 0
-        row_bg      = "#FFFBF5" if is_top else "#FFFFFF"
-        rank_style  = "font-weight:800;color:#F97316;" if is_top else "font-weight:500;color:#B8B0A4;"
-        title_fw    = "700" if is_top else "400"
-        bl          = "border-left:3px solid #F97316;" if is_top else "border-left:3px solid transparent;"
+    for i, item in enumerate(results):
+        is_top = i == 0
+        row_bg = "#FFFBF5" if is_top else "#FFFFFF"
+        rank_color = "#F97316" if is_top else "#B8B0A4"
+        border_left = "3px solid #F97316" if is_top else "3px solid transparent"
 
-        def sc(score, invert=False):
-            cls    = mpill(score, invert)
-            bg, fg = pill_colors(cls)
-            return (
-                f'<span style="background:{bg};color:{fg};padding:0.2rem 0.55rem;'
-                f'border-radius:999px;font-size:0.78rem;font-weight:700;">'
-                f'{score}/10</span>'
-            )
-
-        rows_html += (
-            f'<tr style="background:{row_bg};border-bottom:1px solid #F5F0E8;{bl}">'
-            f'<td style="padding:0.65rem 1rem;{rank_style}font-size:0.85rem;">#{i+1}</td>'
-            f'<td style="padding:0.65rem 1rem;font-weight:{title_fw};color:#1A1A2E;font-size:0.87rem;">{r["pain_point"]}</td>'
-            f'<td style="padding:0.65rem 1rem;text-align:center;">{sc(r["demand_score"])}</td>'
-            f'<td style="padding:0.65rem 1rem;text-align:center;">{sc(r["difficulty_score"],True)}</td>'
-            f'<td style="padding:0.65rem 1rem;text-align:center;">{sc(r["opportunity_score"])}</td>'
-            f'</tr>'
-        )
+        rows_html += f"""
+        <tr style="background:{row_bg}; border-left:{border_left};">
+            <td style="font-weight:800;color:{rank_color};">#{i+1}</td>
+            <td style="font-weight:{800 if is_top else 500}; color:#1A1A2E;">
+                {safe(item.get("pain_point", ""))}
+            </td>
+            <td class="center">{score_pill_html("", item.get("demand_score", 0)).replace("&quot;", '"')}</td>
+            <td class="center">{score_pill_html("", item.get("difficulty_score", 0), True).replace("&quot;", '"')}</td>
+            <td class="center">{score_pill_html("", item.get("opportunity_score", 0)).replace("&quot;", '"')}</td>
+        </tr>
+        """
 
     st.markdown(
-        f'<div style="border:1.5px solid #F0EBE3;border-radius:12px;'
-        f'overflow:hidden;background:#FFFFFF;margin-bottom:1rem;'
-        f'box-shadow:0 2px 8px rgba(0,0,0,0.04);">'
-        f'<table style="width:100%;border-collapse:collapse;">'
-        f'<thead><tr style="background:#FAFAF7;border-bottom:2px solid #F0EBE3;">'
-        f'<th style="padding:0.6rem 1rem;text-align:left;font-size:0.7rem;color:#B8B0A4;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;">Rank</th>'
-        f'<th style="padding:0.6rem 1rem;text-align:left;font-size:0.7rem;color:#B8B0A4;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;">Pain Point</th>'
-        f'<th style="padding:0.6rem 1rem;text-align:center;font-size:0.7rem;color:#B8B0A4;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;">Demand</th>'
-        f'<th style="padding:0.6rem 1rem;text-align:center;font-size:0.7rem;color:#B8B0A4;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;">Difficulty</th>'
-        f'<th style="padding:0.6rem 1rem;text-align:center;font-size:0.7rem;color:#B8B0A4;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;">Opportunity</th>'
-        f'</tr></thead><tbody>{rows_html}</tbody></table></div>',
-        unsafe_allow_html=True
+        f"""
+        <div class="results-table-wrap">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Pain Point</th>
+                        <th class="center">Demand</th>
+                        <th class="center">Difficulty</th>
+                        <th class="center">Opportunity</th>
+                    </tr>
+                </thead>
+                <tbody>{rows_html}</tbody>
+            </table>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    df  = pd.DataFrame(results)
+    df = pd.DataFrame(results)
     csv = df.to_csv(index=False)
     st.download_button(
         label="Download results as CSV",
         data=csv,
         file_name=f"curiosity_radar_{kw.replace(' ', '_')}.csv",
-        mime="text/csv"
+        mime="text/csv",
     )
 
     st.markdown(
         '<hr style="border:none;border-top:1px solid #F0EBE3;margin:2rem 0;">',
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-    # Pain point cards
     for i, item in enumerate(results):
-        is_top    = i == 0
-        rank_cls  = RANK_CLASSES[min(i, 4)]
-        card_cls  = "pain-card top-pick" if is_top else f"pain-card {rank_cls}"
-        badge     = "✨ TOP OPPORTUNITY" if is_top else f"#{i+1}"
-        title_cls = f"card-title {rank_cls}".strip()
+        is_top = i == 0
+        badge = "✨ TOP OPPORTUNITY" if is_top else f"#{i+1}"
+        card_class = "pain-card top-pick" if is_top else "pain-card"
 
         metrics_html = (
-            score_pill_html("Demand", item["demand_score"]) + " " +
-            score_pill_html("Difficulty", item["difficulty_score"], invert=True) + " " +
-            score_pill_html("Score", item["opportunity_score"])
+            score_pill_html("Demand", item.get("demand_score", 0))
+            + " "
+            + score_pill_html("Difficulty", item.get("difficulty_score", 0), invert=True)
+            + " "
+            + score_pill_html("Score", item.get("opportunity_score", 0))
         )
 
         st.markdown(
-            f'<div class="{card_cls}">'
-            f'<p style="font-size:0.72rem;font-weight:700;color:#C2410C;'
-            f'letter-spacing:0.06em;margin:0 0 0.4rem 0;">{badge}</p>'
-            f'<h3 class="{title_cls}">{item["pain_point"]}</h3>'
-            f'<p class="card-desc">{item["description"]}</p>'
-            f'<div style="display:flex;gap:0.6rem;flex-wrap:wrap;'
-            f'margin-bottom:1rem;">{metrics_html}</div>'
-            f'<div class="app-solution">'
-            f'<p class="app-solution-label">The Missing Tool</p>'
-            f'<p class="app-solution-text">{item["app_idea"]}</p>'
-            f'</div>'
-            f'</div>',
-            unsafe_allow_html=True
+            f"""
+            <div class="{card_class}">
+                <p class="rank-label">{safe(badge)}</p>
+                <h3 class="card-title">{safe(item.get("pain_point", ""))}</h3>
+                <p class="card-desc">{safe(item.get("description", ""))}</p>
+                <div class="metric-row">{metrics_html}</div>
+                <div class="solution-box">
+                    <p class="solution-label">The Missing Tool</p>
+                    <p class="solution-text">{safe(item.get("app_idea", ""))}</p>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         with st.expander("View Reddit evidence"):
             st.markdown(
-                f'<p style="font-size:0.9rem;color:#7A7A9A;font-style:italic;'
-                f'line-height:1.6;padding-left:0.75rem;'
-                f'border-left:2px solid #E8E4DC;margin:0;">'
-                f'"{item["evidence"]}"</p>',
-                unsafe_allow_html=True
+                f'<p class="evidence">"{safe(item.get("evidence", ""))}"</p>',
+                unsafe_allow_html=True,
             )
 
-    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-    _, mid, _ = st.columns([1, 2, 1])
+    st.markdown("<div style='height:0.4rem'></div>", unsafe_allow_html=True)
+    _, mid, _ = st.columns([1, 1.4, 1])
     with mid:
         if st.button("New Search", type="secondary", use_container_width=True):
-            st.session_state.results       = None
-            st.session_state["pending_kw"] = ""
+            st.session_state.results = None
+            st.session_state.last_keyword = ""
+            st.session_state.post_count = 0
             st.rerun()
 
 # ============================================================

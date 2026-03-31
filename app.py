@@ -115,7 +115,7 @@ if scan_clicked and keyword:
         with status_container.container():
             with status_container.container():
             # Add your loading video here!
-            st.video("assets/loading_radar.mp4", autoplay=True, loop=True)
+            st.video("assets/radar_loop.mp4", autoplay=True, loop=True)
             st.info(f"📡 Calibrating radar for '{keyword}'...")
             
             # Fetch Posts

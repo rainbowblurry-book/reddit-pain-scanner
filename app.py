@@ -47,17 +47,16 @@ API_KEY = st.secrets.get("GEMINI_API_KEY", "")
 # ============================================================
 with st.sidebar:
    # 1. WORKSPACE HEADER
-    # We changed the column ratio from [1, 4] to [1, 3] to give the logo more horizontal room
-    col1, col2 = st.columns([1, 3])
+    # Changing to a 1:1 ratio gives the logo a massive space to expand into
+    col1, col2 = st.columns([1, 1])
     
     with col1:
-        # Increased the width from 40 to 70 pixels!
-        st.image(LOGO_PATH, width=70)
+        # Boom. Much larger. (You can push this to 150 if you want it massive)
+        st.image(LOGO_PATH, width=120)
         
     with col2:
-        st.markdown("**Builder Workspace**")
-        st.caption("Free Tier")
-        
+        # Pushing the text down slightly so it aligns with the middle of the big logo
+        st.markdown("<div style='padding-top: 15px;'><strong>Builder Workspace</strong><br><span style='font-size: 0.85em; color: #7A7A9A;'>Free Tier</span></div>", unsafe_allow_html=True)
     st.divider()
 
     # 2. RECENT HISTORY

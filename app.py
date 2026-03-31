@@ -349,24 +349,30 @@ st.markdown("""
 # — Fix: set st.session_state["kw"] directly from pills so
 #   the text input always reflects the current value
 # ============================================================
-if "kw" not in st.session_state:
-    st.session_state["kw"] = ""
+if "pending_kw" not in st.session_state:
+    st.session_state["pending_kw"] = ""
+if "do_scan" not in st.session_state:
+    st.session_state["do_scan"] = False
+
+def on_enter():
+    st.session_state["do_scan"] = True
 
 col1, col2 = st.columns([3, 1])
 with col1:
     keyword = st.text_input(
         "keyword",
-        key="kw",
+        value=st.session_state["pending_kw"],
         placeholder="e.g. sourdough, marathon training, AWS...",
         label_visibility="collapsed",
+        on_change=on_enter
     )
+    st.session_state["pending_kw"] = ""
 with col2:
     scan_clicked = st.button(
         "Scan Reddit",
         type="primary",
         use_container_width=True
     )
-
 if not API_KEY:
     st.warning("No hosted API key found. Add GEMINI_API_KEY to Streamlit secrets.")
 
@@ -412,23 +418,27 @@ if st.session_state.results is None:
         "sourdough baking", "marathon training", "remote work",
         "language learning", "sleep tracking", "personal finance",
     ]
-    ex_cols = st.columns(len(examples))
+   ex_cols = st.columns(len(examples))
     for col, ex in zip(ex_cols, examples):
         with col:
             if st.button(ex, key=f"ex_{ex}", use_container_width=True):
-                st.session_state["kw"] = ex
+                st.session_state["pending_kw"] = ex
+                st.session_state["do_scan"]    = True
                 st.rerun()
 
 # ============================================================
 # SCAN EXECUTION
 # ============================================================
-active_keyword = st.session_state.get("kw", "").strip()
+active_keyword = keyword.strip()
 
-if scan_clicked and not active_keyword:
+should_scan = scan_clicked or st.session_state.get("do_scan", False)
+st.session_state["do_scan"] = False
+
+if should_scan and not active_keyword:
     st.error("Please enter a topic to scan.")
-elif scan_clicked and not API_KEY:
+elif should_scan and not API_KEY:
     st.error("No Gemini API key found. Add GEMINI_API_KEY to Streamlit secrets.")
-elif scan_clicked and active_keyword and API_KEY:
+elif should_scan and active_keyword and API_KEY:
     run_scan(active_keyword)
 
 # ============================================================

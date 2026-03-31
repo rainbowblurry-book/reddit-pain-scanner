@@ -368,7 +368,10 @@ st.markdown("""
 # ============================================================
 # 6. SEARCH BAR
 # ============================================================
-prefill = st.session_state.pop("prefill_keyword", "")
+prefill        = st.session_state.get("prefill_keyword", "")
+trigger_scan   = st.session_state.pop("trigger_scan", False)
+active_keyword = prefill if trigger_scan else ""
+
 col1, col2 = st.columns([3, 1])
 with col1:
     keyword = st.text_input(
@@ -379,6 +382,11 @@ with col1:
     )
 with col2:
     scan_clicked = st.button("Scan Reddit", type="primary", use_container_width=True)
+
+# Final keyword — example click wins over manual input
+active_keyword = active_keyword if trigger_scan else keyword
+if trigger_scan and "prefill_keyword" in st.session_state:
+    del st.session_state["prefill_keyword"]
 
 # ============================================================
 # 7. ONBOARDING BLOCK (only before first scan)
@@ -427,8 +435,9 @@ if not st.session_state.results:
     for col, ex in zip(ex_cols, examples):
         with col:
             if st.button(ex, use_container_width=True, key=f"ex_{ex}"):
-                st.session_state["prefill_keyword"] = ex
-                st.rerun()
+    st.session_state["prefill_keyword"] = ex
+    st.session_state["trigger_scan"] = True
+    st.rerun()
 
     st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
 
@@ -441,7 +450,7 @@ if not API_KEY:
 # ============================================================
 # 9. RATE LIMIT + EXECUTION
 # ============================================================
-if scan_clicked and keyword and API_KEY:
+if (scan_clicked or trigger_scan) and active_keyword and API_KEY:
     elapsed = time.time() - st.session_state.last_scan_time
     if elapsed < COOLDOWN_SECONDS:
         remaining = int(COOLDOWN_SECONDS - elapsed)
@@ -449,13 +458,13 @@ if scan_clicked and keyword and API_KEY:
     else:
         st.session_state.results = None
         with st.spinner("Fetching Reddit posts and analyzing with Gemini…"):
-            posts = fetch_reddit_posts(keyword)
+            posts = fetch_reddit_posts(active_keyword)
             if posts:
                 results = analyse_pain_points(keyword, posts, API_KEY)
                 st.session_state.results         = sorted(
                     results, key=lambda x: x.get("opportunity_score", 0), reverse=True
                 )
-                st.session_state.last_keyword    = keyword
+                st.session_state.last_keyword    = active_keyword
                 st.session_state.last_scan_time  = time.time()
                 st.session_state.post_count      = len(posts)
 

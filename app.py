@@ -396,6 +396,7 @@ if not st.session_state.results:
 
     st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
 
+    # How it works
     c1, c2, c3 = st.columns(3, gap="medium")
     steps = [
         ("🔍", "Enter any topic",
@@ -407,28 +408,24 @@ if not st.session_state.results:
     ]
     for col, (icon, title, desc) in zip([c1, c2, c3], steps):
         with col:
-            st.markdown(f"""
-<div style="text-align:center; padding:1.5rem 1.25rem; background:#FFFFFF;
-            border:1px solid #E5E7EB; border-radius:12px;
-            box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-    <div style="font-size:1.6rem; margin-bottom:0.6rem;">{icon}</div>
-    <p style="font-weight:700; color:#111827; margin:0 0 0.35rem 0;
-              font-size:0.95rem;">{title}</p>
-    <p style="color:#6B7280; font-size:0.82rem; margin:0;
-              line-height:1.5;">{desc}</p>
-</div>
-""", unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="text-align:center; padding:1.5rem 1.25rem; background:#FFFFFF; border:1px solid #E5E7EB; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+                f'<div style="font-size:1.6rem; margin-bottom:0.6rem;">{icon}</div>'
+                f'<p style="font-weight:700; color:#111827; margin:0 0 0.35rem 0; font-size:0.95rem;">{title}</p>'
+                f'<p style="color:#6B7280; font-size:0.82rem; margin:0; line-height:1.5;">{desc}</p>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
 
-    st.markdown("""
-<p style="text-align:center; color:#9CA3AF; font-size:0.82rem;
-          margin-top:2rem; margin-bottom:0.75rem; letter-spacing:0.02em;">
-    — or try one of these —
-</p>
-""", unsafe_allow_html=True)
+    # Example topic pills
+    st.markdown(
+        '<p style="text-align:center; color:#9CA3AF; font-size:0.82rem; margin-top:2rem; margin-bottom:0.75rem; letter-spacing:0.02em;">— or try one of these —</p>',
+        unsafe_allow_html=True
+    )
 
     examples = [
         "sourdough baking", "marathon training", "remote work",
-        "language learning", "sleep tracking",  "personal finance",
+        "language learning", "sleep tracking", "personal finance",
     ]
     ex_cols = st.columns(len(examples))
     for col, ex in zip(ex_cols, examples):
@@ -439,89 +436,50 @@ if not st.session_state.results:
                 st.rerun()
 
     st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
-    st.markdown("<hr style='border:none; border-top:1px solid #E5E7EB; margin:2.5rem 0 2rem 0;'>", unsafe_allow_html=True)
 
-    st.markdown("""
-<div style="text-align:center; margin-bottom:1.5rem;">
-    <p style="font-weight:700; color:#111827; font-size:1rem; margin:0 0 0.25rem 0;">
-        Here's what a scan looks like
-    </p>
-    <p style="color:#9CA3AF; font-size:0.82rem; margin:0;">
-        Real output from the query <em>"sourdough baking"</em>
-    </p>
-</div>
-""", unsafe_allow_html=True)
+    # Divider
+    st.markdown(
+        '<hr style="border:none; border-top:1px solid #E5E7EB; margin:2rem 0;">',
+        unsafe_allow_html=True
+    )
 
-    st.markdown("""
-<div style="border:2px solid #111827; border-radius:12px; padding:1.75rem;
-            background:#FFFFFF; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);
-            position:relative; overflow:hidden;">
+    # Example preview header
+    st.markdown(
+        '<div style="text-align:center; margin-bottom:1.5rem;">'
+        '<p style="font-weight:700; color:#111827; font-size:1rem; margin:0 0 0.25rem 0;">Here\'s what a scan looks like</p>'
+        '<p style="color:#9CA3AF; font-size:0.82rem; margin:0;">Real output from the query <em>sourdough baking</em></p>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
-    <div style="position:absolute; top:1rem; right:1.25rem;
-                background:#F3F4F6; border:1px solid #E5E7EB; border-radius:999px;
-                padding:0.2rem 0.75rem; font-size:0.72rem; font-weight:700;
-                color:#9CA3AF; letter-spacing:0.05em;">
-        EXAMPLE
-    </div>
+    # Example card — built as one single concatenated string, no multiline, no comments
+    example_card = (
+        '<div style="border:2px solid #111827; border-radius:12px; padding:1.75rem; background:#FFFFFF; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); position:relative; overflow:hidden;">'
+        '<div style="position:absolute; top:1rem; right:1.25rem; background:#F3F4F6; border:1px solid #E5E7EB; border-radius:999px; padding:0.2rem 0.75rem; font-size:0.72rem; font-weight:700; color:#9CA3AF; letter-spacing:0.05em;">EXAMPLE</div>'
+        '<p style="font-size:0.8rem; font-weight:700; color:#9CA3AF; margin-bottom:0.5rem; letter-spacing:0.05em;">✨ TOP OPPORTUNITY</p>'
+        '<h3 style="font-size:1.4rem; font-weight:800; color:#111827; margin:0 0 0.6rem 0; line-height:1.3;">No structured beginner learning path</h3>'
+        '<p style="font-size:1rem; color:#4B5563; margin-bottom:1.25rem; line-height:1.6;">New bakers feel overwhelmed by conflicting advice across forums, YouTube, and blogs, with no single guided progression from basic loaf to advanced techniques.</p>'
+        '<div style="display:flex; gap:0.75rem; margin-bottom:1.25rem; flex-wrap:wrap; align-items:center;">'
+        '<span style="background:#DCFCE7; color:#166534; border:1px solid #BBF7D0; padding:0.4rem 1rem; border-radius:999px; font-size:0.875rem; font-weight:600;">Demand: 9/10</span>'
+        '<span style="background:#DCFCE7; color:#166534; border:1px solid #BBF7D0; padding:0.4rem 1rem; border-radius:999px; font-size:0.875rem; font-weight:600;">Difficulty: 3/10</span>'
+        '<span style="background:#DCFCE7; color:#166534; border:1px solid #BBF7D0; padding:0.4rem 1rem; border-radius:999px; font-size:0.875rem; font-weight:600;">Score: 9/10</span>'
+        '<span style="font-size:0.78rem; color:#9CA3AF; margin-left:auto; font-style:italic;">Gemini estimate · 40 posts</span>'
+        '</div>'
+        '<div style="background:#F3F4F6; padding:1.25rem; border-radius:8px; margin-bottom:1.25rem; border-left:4px solid #111827;">'
+        '<p style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; color:#6B7280; margin:0 0 0.4rem 0;">The Missing Tool</p>'
+        '<p style="font-size:1.05rem; font-weight:600; color:#111827; margin:0; line-height:1.5;">A structured sourdough curriculum app that takes beginners step-by-step from their first loaf to open crumb scoring, with progress tracking and community feedback at each stage.</p>'
+        '</div>'
+        '<p style="font-size:0.95rem; color:#6B7280; font-style:italic; margin:0; line-height:1.5;">"I\'ve watched 50 YouTube videos and read 30 blog posts and I still feel like I have no idea what I\'m doing. Is there any resource that walks you through this systematically?"</p>'
+        '</div>'
+    )
+    st.markdown(example_card, unsafe_allow_html=True)
 
-    <p style="font-size:0.8rem; font-weight:700; color:#9CA3AF;
-              margin-bottom:0.5rem; letter-spacing:0.05em;">✨ TOP OPPORTUNITY</p>
-
-    <h3 style="font-size:1.4rem; font-weight:800; color:#111827;
-               margin:0 0 0.6rem 0; line-height:1.3;">
-        No structured beginner learning path
-    </h3>
-
-    <p style="font-size:1rem; color:#4B5563; margin-bottom:1.25rem; line-height:1.6;">
-        New bakers feel overwhelmed by conflicting advice across forums, YouTube, and blogs,
-        with no single guided progression from basic loaf to advanced techniques.
-    </p>
-
-    <div style="display:flex; gap:0.75rem; margin-bottom:1.25rem; flex-wrap:wrap; align-items:center;">
-        <span style="background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;
-                     padding:0.4rem 1rem; border-radius:999px; font-size:0.875rem; font-weight:600;">
-            Demand: 9/10
-        </span>
-        <span style="background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;
-                     padding:0.4rem 1rem; border-radius:999px; font-size:0.875rem; font-weight:600;">
-            Difficulty: 3/10
-        </span>
-        <span style="background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;
-                     padding:0.4rem 1rem; border-radius:999px; font-size:0.875rem; font-weight:600;">
-            Score: 9/10
-        </span>
-        <span style="font-size:0.78rem; color:#9CA3AF; margin-left:auto; font-style:italic;">
-            Gemini estimate · 40 posts
-        </span>
-    </div>
-
-    <div style="background:#F3F4F6; padding:1.25rem; border-radius:8px;
-                margin-bottom:1.25rem; border-left:4px solid #111827;">
-        <p style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em;
-                  font-weight:700; color:#6B7280; margin:0 0 0.4rem 0;">The Missing Tool</p>
-        <p style="font-size:1.05rem; font-weight:600; color:#111827; margin:0; line-height:1.5;">
-            A structured sourdough curriculum app that takes beginners step-by-step from
-            their first loaf to open crumb scoring, with progress tracking and
-            community feedback at each stage.
-        </p>
-    </div>
-
-    <p style="font-size:0.95rem; color:#6B7280; font-style:italic; margin:0; line-height:1.5;">
-        "I've watched 50 YouTube videos and read 30 blog posts and I still feel like
-        I have no idea what I'm doing. Is there any resource that walks you through
-        this systematically?"
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-    # Use cases
+    # Who uses this
     st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
-    st.markdown("""
-<p style="text-align:center; font-weight:700; color:#111827;
-          font-size:1rem; margin-bottom:1.25rem;">
-    Who uses this
-</p>
-""", unsafe_allow_html=True)
+    st.markdown(
+        '<p style="text-align:center; font-weight:700; color:#111827; font-size:1rem; margin-bottom:1.25rem;">Who uses this</p>',
+        unsafe_allow_html=True
+    )
 
     uc1, uc2, uc3 = st.columns(3, gap="medium")
     use_cases = [
@@ -534,15 +492,16 @@ if not st.session_state.results:
     ]
     for col, (icon, title, desc) in zip([uc1, uc2, uc3], use_cases):
         with col:
-            st.markdown(f"""
-<div style="padding:1.25rem; background:#FFFFFF; border:1px solid #E5E7EB;
-            border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-    <div style="font-size:1.4rem; margin-bottom:0.5rem;">{icon}</div>
-    <p style="font-weight:700; color:#111827; font-size:0.9rem;
-              margin:0 0 0.35rem 0;">{title}</p>
-    <p style="color:#6B7280; font-size:0.82rem; margin:0; line-height:1.5;">{desc}</p>
-</div>
-""", unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="padding:1.25rem; background:#FFFFFF; border:1px solid #E5E7EB; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">'
+                f'<div style="font-size:1.4rem; margin-bottom:0.5rem;">{icon}</div>'
+                f'<p style="font-weight:700; color:#111827; font-size:0.9rem; margin:0 0 0.35rem 0;">{title}</p>'
+                f'<p style="color:#6B7280; font-size:0.82rem; margin:0; line-height:1.5;">{desc}</p>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+
+    st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
 # ============================================================
 # 8. API KEY WARNING
 # ============================================================

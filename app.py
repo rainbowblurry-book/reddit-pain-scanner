@@ -382,7 +382,7 @@ Posts:
             )
         )
         return json.loads(response.text)
-  except Exception as e:
+    except Exception as e:
         error_str = str(e).lower()
         if "429" in error_str or "quota" in error_str or "rate" in error_str or "exhausted" in error_str:
             st.error(

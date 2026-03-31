@@ -368,8 +368,8 @@ st.markdown("""
 # ============================================================
 # 6. SEARCH FORM
 # ============================================================
-if "keyword" not in st.session_state:
-    st.session_state["keyword"] = ""
+if "prefill_keyword" not in st.session_state:
+    st.session_state["prefill_keyword"] = ""
 if "trigger_scan" not in st.session_state:
     st.session_state["trigger_scan"] = False
 
@@ -378,7 +378,7 @@ with st.form(key="search_form"):
     with col1:
         keyword = st.text_input(
             "keyword",
-            key="keyword",
+            value=st.session_state["prefill_keyword"],
             placeholder="e.g. sourdough, marathon training, AWS...",
             label_visibility="collapsed"
         )
@@ -388,7 +388,6 @@ with st.form(key="search_form"):
             type="primary",
             use_container_width=True
         )
-
 # ============================================================
 # 7. ONBOARDING BLOCK (only before first scan)
 # ============================================================
@@ -431,7 +430,7 @@ if not st.session_state.results:
     for col, ex in zip(ex_cols, examples):
         with col:
             if st.button(ex, use_container_width=True, key=f"ex_{ex}"):
-                st.session_state["keyword"] = ex
+                st.session_state["prefill_keyword"] = ex
                 st.session_state["trigger_scan"] = True
                 st.rerun()
 
@@ -556,11 +555,17 @@ if not API_KEY:
 # ============================================================
 # 9. RATE LIMIT + EXECUTION
 # ============================================================
-should_scan = scan_clicked or st.session_state.get("trigger_scan", False)
-active_keyword = st.session_state.get("keyword", "").strip()
+should_scan    = scan_clicked or st.session_state.get("trigger_scan", False)
+# If triggered by example pill, use prefill. If triggered by form, use what user typed.
+active_keyword = (
+    st.session_state.get("prefill_keyword", "").strip()
+    if st.session_state.get("trigger_scan", False)
+    else keyword.strip()
+)
 
 if should_scan and active_keyword and API_KEY:
-    st.session_state["trigger_scan"] = False
+    st.session_state["trigger_scan"]    = False
+    st.session_state["prefill_keyword"] = ""
     elapsed = time.time() - st.session_state.last_scan_time
     if elapsed < COOLDOWN_SECONDS:
         remaining = int(COOLDOWN_SECONDS - elapsed)

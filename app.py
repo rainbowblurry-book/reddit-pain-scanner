@@ -8,6 +8,11 @@ from utils import (
 )
 import time
 import os
+import base64
+
+def _img_to_b64(path: str) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
 # ============================================================
 # ASSETS
@@ -108,16 +113,20 @@ st.markdown("""
     }
 
     /* Pill buttons */
-    div[data-testid="stButton"] button {
-        background-color: #FFF7ED !important;
-        color: #C2410C !important;
-        border-radius: 999px !important;
-        border: 1.5px solid #FED7AA !important;
-        font-size: 0.82rem !important;
-        font-weight: 500 !important;
-        padding: 0.3rem 0.75rem !important;
-        transition: all 0.15s ease !important;
-    }
+div[data-testid="stButton"] button {
+    background-color: #FFF7ED !important;
+    color: #C2410C !important;
+    border-radius: 999px !important;
+    border: 1.5px solid #FED7AA !important;
+    font-size: 0.78rem !important;
+    font-weight: 500 !important;
+    padding: 0.3rem 0.65rem !important;
+    transition: all 0.15s ease !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    min-width: 0 !important;
+}
     div[data-testid="stButton"] button:hover {
         background-color: #F97316 !important;
         color: #FFFFFF !important;
@@ -336,9 +345,12 @@ def run_scan(keyword):
 # LOGO
 # ============================================================
 if os.path.exists(LOGO_PATH):
-    _, logo_col, _ = st.columns([2, 1, 2])
-    with logo_col:
-        st.image(LOGO_PATH, use_container_width=True)
+    st.markdown(
+        f'<div style="text-align:center; padding-top:2rem;">'
+        f'<img src="data:image/png;base64,{_img_to_b64(LOGO_PATH)}"'
+        f' style="height:72px; width:auto;" /></div>',
+        unsafe_allow_html=True
+    )
 else:
     st.markdown(
         '<p style="text-align:center;font-size:1.5rem;'
@@ -539,10 +551,10 @@ else:
         "sourdough baking", "marathon training", "remote work",
         "language learning", "sleep tracking", "personal finance",
     ]
-    ex_cols = st.columns(len(examples))
-    for col, ex in zip(ex_cols, examples):
-        with col:
-            if st.button(ex, key=f"ex_{ex}", use_container_width=True):
+    ex_cols = st.columns(len(examples), gap="small")
+for col, ex in zip(ex_cols, examples):
+    with col:
+        if st.button(ex, key=f"ex_{ex}"):
                 st.session_state["pending_kw"] = ex
                 st.session_state["do_scan"]    = True
                 st.rerun()

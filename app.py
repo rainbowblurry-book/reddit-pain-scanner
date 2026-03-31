@@ -27,22 +27,20 @@ st.markdown("""
     .stApp { background-color: #FAFAFB; }
 
     html, body, [class*="css"] {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                     Helvetica, Arial, sans-serif;
         color: #111827;
         -webkit-font-smoothing: antialiased;
     }
 
-    /* Widen center column */
     [data-testid="block-container"] {
         max-width: 950px !important;
         padding-left: 2rem !important;
         padding-right: 2rem !important;
     }
-    [data-testid="stVerticalBlock"] {
-        max-width: 100% !important;
-    }
+    [data-testid="stVerticalBlock"] { max-width: 100% !important; }
 
-    /* Input */
+    /* ---- Input ---- */
     .stTextInput > div > div > input {
         border-radius: 8px !important;
         border: 1px solid #E5E7EB !important;
@@ -56,8 +54,9 @@ st.markdown("""
         border-color: #000000 !important;
         box-shadow: 0 0 0 1px #000000 !important;
     }
+    .stTextInput > div > div > input::placeholder { color: #9CA3AF !important; }
 
-    /* Primary button */
+    /* ---- Primary button ---- */
     .stButton > button[kind="primary"] {
         background-color: #111827 !important;
         color: #FFFFFF !important;
@@ -73,34 +72,24 @@ st.markdown("""
         transform: translateY(-1px);
     }
 
-    /* Secondary button */
+    /* ---- Secondary button ---- */
     .stButton > button[kind="secondary"] {
-        background-color: #FFFFFF !important;
-        color: #374151 !important;
+        background-color: #111827 !important;
+        color: #FFFFFF !important;
         border-radius: 8px !important;
-        border: 1px solid #E5E7EB !important;
-        font-weight: 500 !important;
+        border: 2px solid #111827 !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+        padding: 0.75rem !important;
         transition: all 0.2s ease !important;
     }
     .stButton > button[kind="secondary"]:hover {
-        border-color: #111827 !important;
-        color: #111827 !important;
+        background-color: #374151 !important;
+        border-color: #374151 !important;
+        transform: translateY(-1px);
     }
 
-    /* Example topic buttons */
-    .stButton > button[kind="tertiary"],
-    div[data-testid="stButton"] button:not([kind="primary"]):not([kind="secondary"]) {
-        background-color: #F9FAFB !important;
-        color: #374151 !important;
-        border-radius: 999px !important;
-        border: 1px solid #E5E7EB !important;
-        font-size: 0.875rem !important;
-        font-weight: 500 !important;
-        padding: 0.4rem 0.75rem !important;
-        transition: all 0.15s ease !important;
-    }
-
-    /* Download button */
+    /* ---- Download button ---- */
     .stDownloadButton > button {
         background-color: #FFFFFF !important;
         color: #374151 !important;
@@ -114,19 +103,52 @@ st.markdown("""
         color: #111827 !important;
     }
 
-    /* Cards */
+    /* ---- Cards ---- */
     .pain-card {
         background-color: #FFFFFF;
         border: 1px solid #E5E7EB;
         border-radius: 12px;
         padding: 2rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05),
+                    0 2px 4px -1px rgba(0,0,0,0.03);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
+    .pain-card:hover {
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08),
+                    0 4px 10px -3px rgba(0,0,0,0.05);
+        transform: translateY(-1px);
+    }
+
+    /* ---- TOP PICK card — animated gradient border ---- */
     .pain-card.top-pick {
-        border: 2px solid #111827;
         background-color: #FDFDFD;
+        border: none;
+        position: relative;
+        z-index: 0;
     }
+    .pain-card.top-pick::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        padding: 2px;
+        background: linear-gradient(135deg, #111827, #6366f1, #111827, #6366f1);
+        background-size: 300% 300%;
+        animation: borderSpin 4s ease infinite;
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: destination-out;
+        mask-composite: exclude;
+        z-index: -1;
+    }
+    @keyframes borderSpin {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
     .pain-card.rank-2 { opacity: 0.97; }
     .pain-card.rank-3 { opacity: 0.94; }
     .pain-card.rank-4 { opacity: 0.91; }
@@ -142,7 +164,7 @@ st.markdown("""
     }
     .card-title.rank-2 { font-size: 1.35rem; }
     .card-title.rank-3 { font-size: 1.25rem; }
-    .card-title.rank-4 { font-size: 1.2rem; }
+    .card-title.rank-4 { font-size: 1.2rem;  }
     .card-title.rank-5 { font-size: 1.15rem; }
 
     .card-desc {
@@ -183,7 +205,7 @@ st.markdown("""
         line-height: 1.5;
     }
 
-    /* Metric pills */
+    /* ---- Metric pills ---- */
     .metric-container {
         display: flex;
         gap: 0.75rem;
@@ -200,9 +222,9 @@ st.markdown("""
         color: #374151;
         border: 1px solid #E5E7EB;
     }
-    .pill-high { background-color: #DCFCE7; color: #166534; border-color: #BBF7D0; }
-    .pill-med  { background-color: #FEF9C3; color: #854D0E; border-color: #FEF08A; }
-    .pill-low  { background-color: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+    .pill-high { background-color:#DCFCE7; color:#166534; border-color:#BBF7D0; }
+    .pill-med  { background-color:#FEF9C3; color:#854D0E; border-color:#FEF08A; }
+    .pill-low  { background-color:#FEE2E2; color:#991B1B; border-color:#FECACA; }
 
     .ai-note {
         font-size: 0.78rem;
@@ -211,12 +233,40 @@ st.markdown("""
         font-style: italic;
     }
 
+    /* ---- Summary table — top row highlight ---- */
+    .top-table-row td:first-child {
+        border-left: 3px solid #111827;
+    }
+
+    /* ---- Empty state ---- */
+    .empty-state {
+        background: #FFFFFF;
+        border: 1px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 3rem 2rem;
+        text-align: center;
+        margin-top: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    /* ---- Divider ---- */
     .divider {
         border: none;
         border-top: 1px solid #E5E7EB;
         margin: 2rem 0;
     }
 
+    /* ---- Hero ---- */
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 0.5rem;
+        color: #111827;
+        line-height: 1.1;
+    }
+
+    /* ---- Footer ---- */
     .subtle-footer {
         text-align: center;
         font-size: 0.82rem;
@@ -226,7 +276,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
 # ============================================================
 # 2. SESSION STATE
 # ============================================================
@@ -255,7 +304,17 @@ def fetch_reddit_posts(keyword, limit=40):
         response.raise_for_status()
         root = ET.fromstring(response.content)
     except Exception:
-        st.error("Failed to connect to Reddit. They may be rate-limiting — try again in a minute.")
+        st.markdown("""
+<div class="empty-state">
+    <p style="font-size:2rem; margin-bottom:0.75rem;">📡</p>
+    <p style="font-weight:700; color:#111827; font-size:1rem; margin-bottom:0.35rem;">
+        Could not reach Reddit
+    </p>
+    <p style="color:#6B7280; font-size:0.9rem; margin:0;">
+        Reddit may be rate-limiting this server. Wait 60 seconds and try again.
+    </p>
+</div>
+""", unsafe_allow_html=True)
         return []
 
     ns = {"atom": "http://www.w3.org/2005/Atom"}
@@ -323,8 +382,16 @@ Posts:
             )
         )
         return json.loads(response.text)
-    except Exception as e:
-        st.error(f"Analysis failed: {e}")
+  except Exception as e:
+        error_str = str(e).lower()
+        if "429" in error_str or "quota" in error_str or "rate" in error_str or "exhausted" in error_str:
+            st.error(
+                "Gemini API limit reached. You have hit the free tier quota "
+                "(250 requests/day or 10/minute). Wait a minute and try again, "
+                "or check your quota at aistudio.google.com."
+            )
+        else:
+            st.error(f"Analysis failed: {e}")
         return []
 
 # ============================================================
@@ -355,10 +422,7 @@ RANK_CLASSES = ["", "rank-2", "rank-3", "rank-4", "rank-5"]
 # ============================================================
 st.markdown("""
 <div style="text-align:center; margin-top:3rem; margin-bottom:2rem;">
-    <h1 style="font-size:2.5rem; font-weight:800; letter-spacing:-0.025em;
-               margin-bottom:0.5rem; color:#111827;">
-        Pain Radar
-    </h1>
+    <h1 class="hero-title">Pain Radar</h1>
     <p style="color:#6B7280; font-size:1.1rem; max-width:500px; margin:0 auto;">
         Discover what people actually want built by analyzing real frustrations on Reddit.
     </p>
@@ -373,21 +437,25 @@ if "prefill_keyword" not in st.session_state:
 if "trigger_scan" not in st.session_state:
     st.session_state["trigger_scan"] = False
 
-with st.form(key="search_form"):
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        keyword = st.text_input(
-            "keyword",
-            value=st.session_state["prefill_keyword"],
-            placeholder="e.g. sourdough, marathon training, AWS...",
-            label_visibility="collapsed"
-        )
-    with col2:
-        scan_clicked = st.form_submit_button(
-            "Scan Reddit",
-            type="primary",
-            use_container_width=True
-        )
+def on_keyword_change():
+    st.session_state["trigger_scan"] = True
+
+col1, col2 = st.columns([3, 1])
+with col1:
+    keyword = st.text_input(
+        "keyword",
+        value=st.session_state["prefill_keyword"],
+        placeholder="e.g. sourdough, marathon training, AWS...",
+        label_visibility="collapsed",
+        on_change=on_keyword_change,
+        key="keyword_input"
+    )
+with col2:
+    scan_clicked = st.button(
+        "Scan Reddit",
+        type="primary",
+        use_container_width=True
+    )
 # ============================================================
 # 7. ONBOARDING BLOCK (only before first scan)
 # ============================================================
@@ -555,39 +623,60 @@ if not API_KEY:
 # ============================================================
 # 9. RATE LIMIT + EXECUTION
 # ============================================================
-should_scan    = scan_clicked or st.session_state.get("trigger_scan", False)
-# If triggered by example pill, use prefill. If triggered by form, use what user typed.
-active_keyword = (
-    st.session_state.get("prefill_keyword", "").strip()
-    if st.session_state.get("trigger_scan", False)
-    else keyword.strip()
-)
+pill_triggered   = st.session_state.get("trigger_scan", False)
+active_keyword   = keyword.strip()
 
-if should_scan and active_keyword and API_KEY:
+if pill_triggered and st.session_state.get("prefill_keyword", ""):
+    active_keyword = st.session_state["prefill_keyword"].strip()
+
+should_scan = scan_clicked or pill_triggered
+
+if should_scan:
     st.session_state["trigger_scan"]    = False
     st.session_state["prefill_keyword"] = ""
+
+if should_scan and not active_keyword:
+    st.error("Please enter a topic to scan.")
+elif should_scan and not API_KEY:
+    st.error("No Gemini API key found. Add GEMINI_API_KEY to your Streamlit secrets.")
+elif should_scan and active_keyword and API_KEY:
     elapsed = time.time() - st.session_state.last_scan_time
     if elapsed < COOLDOWN_SECONDS:
         remaining = int(COOLDOWN_SECONDS - elapsed)
-        st.warning(f"⏳ Please wait {remaining}s before scanning again.")
+        st.warning(f"Please wait {remaining}s before scanning again.")
     else:
         st.session_state.results = None
         with st.spinner("Fetching Reddit posts and analyzing with Gemini…"):
             posts = fetch_reddit_posts(active_keyword)
             if posts:
                 results = analyse_pain_points(active_keyword, posts, API_KEY)
-                st.session_state.results        = sorted(
-                    results, key=lambda x: x.get("opportunity_score", 0), reverse=True
-                )
-                st.session_state.last_keyword   = active_keyword
-                st.session_state.last_scan_time = time.time()
-                st.session_state.post_count     = len(posts)
-elif should_scan:
-    st.session_state["trigger_scan"] = False
-
+                if results is not None:
+                    st.session_state.results = sorted(
+                        results,
+                        key=lambda x: x.get("opportunity_score", 0),
+                        reverse=True
+                    )
+                    st.session_state.last_keyword   = active_keyword
+                    st.session_state.last_scan_time = time.time()
+                    st.session_state.post_count     = len(posts)
 # ============================================================
 # 10. RESULTS
 # ============================================================
+if st.session_state.results is not None and len(st.session_state.results) == 0:
+    st.markdown("""
+<div class="empty-state">
+    <p style="font-size:2rem; margin-bottom:0.75rem;">🔍</p>
+    <p style="font-weight:700; color:#111827; font-size:1rem; margin-bottom:0.35rem;">
+        No clear pain points found
+    </p>
+    <p style="color:#6B7280; font-size:0.9rem; margin:0; max-width:360px; margin-left:auto; margin-right:auto;">
+        This topic may not have enough complaint-style posts.
+        Try something more specific — like <em>sourdough starter problems</em>
+        instead of <em>sourdough</em>.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
 if st.session_state.results:
     results    = st.session_state.results
     kw         = st.session_state.last_keyword
@@ -621,12 +710,13 @@ if st.session_state.results:
     rows_html = ""
     for s in summary:
         is_top   = s["Rank"] == "#1"
-        row_bg   = "#FAFFF9" if is_top else "#FFFFFF"
-        rank_fw  = "font-weight:800; color:#111827;" if is_top else "font-weight:500; color:#9CA3AF;"
-        title_fw = "700" if is_top else "400"
+        row_bg      = "#FAFFF9" if is_top else "#FFFFFF"
+    rank_fw     = "font-weight:800; color:#111827;" if is_top else "font-weight:500; color:#9CA3AF;"
+    title_fw    = "700" if is_top else "400"
+    border_left = "border-left:3px solid #111827;" if is_top else "border-left:3px solid transparent;"
 
-        rows_html += f"""
-<tr style="background:{row_bg}; border-bottom:1px solid #F3F4F6;">
+    rows_html += f"""
+<tr style="background:{row_bg}; border-bottom:1px solid #F3F4F6; {border_left}">
     <td style="padding:0.75rem 1rem; {rank_fw} font-size:0.875rem; white-space:nowrap;">{s["Rank"]}</td>
     <td style="padding:0.75rem 1rem; font-weight:{title_fw}; color:#111827; font-size:0.9rem;">{s["Pain Point"]}</td>
     <td style="padding:0.75rem 1rem; text-align:center;">{render_score_cell(s["Demand"])}</td>

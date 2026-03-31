@@ -457,7 +457,6 @@ if not st.session_state.results:
             background:#FFFFFF; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);
             position:relative; overflow:hidden;">
 
-    <!-- Watermark -->
     <div style="position:absolute; top:1rem; right:1.25rem;
                 background:#F3F4F6; border:1px solid #E5E7EB; border-radius:999px;
                 padding:0.2rem 0.75rem; font-size:0.72rem; font-weight:700;

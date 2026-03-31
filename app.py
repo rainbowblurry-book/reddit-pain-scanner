@@ -366,27 +366,28 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 6. SEARCH BAR
+# 6. SEARCH FORM
 # ============================================================
-prefill        = st.session_state.get("prefill_keyword", "")
-trigger_scan   = st.session_state.pop("trigger_scan", False)
-active_keyword = prefill if trigger_scan else ""
+if "keyword" not in st.session_state:
+    st.session_state["keyword"] = ""
+if "trigger_scan" not in st.session_state:
+    st.session_state["trigger_scan"] = False
 
-col1, col2 = st.columns([3, 1])
-with col1:
-    keyword = st.text_input(
-        "keyword",
-        value=prefill,
-        placeholder="e.g. sourdough, marathon training, AWS...",
-        label_visibility="collapsed"
-    )
-with col2:
-    scan_clicked = st.button("Scan Reddit", type="primary", use_container_width=True)
-
-# Final keyword — example click wins over manual input
-active_keyword = active_keyword if trigger_scan else keyword
-if trigger_scan and "prefill_keyword" in st.session_state:
-    del st.session_state["prefill_keyword"]
+with st.form(key="search_form"):
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        keyword = st.text_input(
+            "keyword",
+            key="keyword",
+            placeholder="e.g. sourdough, marathon training, AWS...",
+            label_visibility="collapsed"
+        )
+    with col2:
+        scan_clicked = st.form_submit_button(
+            "Scan Reddit",
+            type="primary",
+            use_container_width=True
+        )
 
 # ============================================================
 # 7. ONBOARDING BLOCK (only before first scan)
@@ -395,7 +396,6 @@ if not st.session_state.results:
 
     st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
 
-    # How it works
     c1, c2, c3 = st.columns(3, gap="medium")
     steps = [
         ("🔍", "Enter any topic",
@@ -419,7 +419,6 @@ if not st.session_state.results:
 </div>
 """, unsafe_allow_html=True)
 
-    # Example topics
     st.markdown("""
 <p style="text-align:center; color:#9CA3AF; font-size:0.82rem;
           margin-top:2rem; margin-bottom:0.75rem; letter-spacing:0.02em;">
@@ -435,12 +434,116 @@ if not st.session_state.results:
     for col, ex in zip(ex_cols, examples):
         with col:
             if st.button(ex, use_container_width=True, key=f"ex_{ex}"):
-    st.session_state["prefill_keyword"] = ex
-    st.session_state["trigger_scan"] = True
-    st.rerun()
+                st.session_state["keyword"] = ex
+                st.session_state["trigger_scan"] = True
+                st.rerun()
 
     st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+    st.markdown("<hr style='border:none; border-top:1px solid #E5E7EB; margin:2.5rem 0 2rem 0;'>", unsafe_allow_html=True)
 
+    st.markdown("""
+<div style="text-align:center; margin-bottom:1.5rem;">
+    <p style="font-weight:700; color:#111827; font-size:1rem; margin:0 0 0.25rem 0;">
+        Here's what a scan looks like
+    </p>
+    <p style="color:#9CA3AF; font-size:0.82rem; margin:0;">
+        Real output from the query <em>"sourdough baking"</em>
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("""
+<div style="border:2px solid #111827; border-radius:12px; padding:1.75rem;
+            background:#FFFFFF; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);
+            position:relative; overflow:hidden;">
+
+    <!-- Watermark -->
+    <div style="position:absolute; top:1rem; right:1.25rem;
+                background:#F3F4F6; border:1px solid #E5E7EB; border-radius:999px;
+                padding:0.2rem 0.75rem; font-size:0.72rem; font-weight:700;
+                color:#9CA3AF; letter-spacing:0.05em;">
+        EXAMPLE
+    </div>
+
+    <p style="font-size:0.8rem; font-weight:700; color:#9CA3AF;
+              margin-bottom:0.5rem; letter-spacing:0.05em;">✨ TOP OPPORTUNITY</p>
+
+    <h3 style="font-size:1.4rem; font-weight:800; color:#111827;
+               margin:0 0 0.6rem 0; line-height:1.3;">
+        No structured beginner learning path
+    </h3>
+
+    <p style="font-size:1rem; color:#4B5563; margin-bottom:1.25rem; line-height:1.6;">
+        New bakers feel overwhelmed by conflicting advice across forums, YouTube, and blogs,
+        with no single guided progression from basic loaf to advanced techniques.
+    </p>
+
+    <div style="display:flex; gap:0.75rem; margin-bottom:1.25rem; flex-wrap:wrap; align-items:center;">
+        <span style="background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;
+                     padding:0.4rem 1rem; border-radius:999px; font-size:0.875rem; font-weight:600;">
+            Demand: 9/10
+        </span>
+        <span style="background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;
+                     padding:0.4rem 1rem; border-radius:999px; font-size:0.875rem; font-weight:600;">
+            Difficulty: 3/10
+        </span>
+        <span style="background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;
+                     padding:0.4rem 1rem; border-radius:999px; font-size:0.875rem; font-weight:600;">
+            Score: 9/10
+        </span>
+        <span style="font-size:0.78rem; color:#9CA3AF; margin-left:auto; font-style:italic;">
+            Gemini estimate · 40 posts
+        </span>
+    </div>
+
+    <div style="background:#F3F4F6; padding:1.25rem; border-radius:8px;
+                margin-bottom:1.25rem; border-left:4px solid #111827;">
+        <p style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em;
+                  font-weight:700; color:#6B7280; margin:0 0 0.4rem 0;">The Missing Tool</p>
+        <p style="font-size:1.05rem; font-weight:600; color:#111827; margin:0; line-height:1.5;">
+            A structured sourdough curriculum app that takes beginners step-by-step from
+            their first loaf to open crumb scoring, with progress tracking and
+            community feedback at each stage.
+        </p>
+    </div>
+
+    <p style="font-size:0.95rem; color:#6B7280; font-style:italic; margin:0; line-height:1.5;">
+        "I've watched 50 YouTube videos and read 30 blog posts and I still feel like
+        I have no idea what I'm doing. Is there any resource that walks you through
+        this systematically?"
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+    # Use cases
+    st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+    st.markdown("""
+<p style="text-align:center; font-weight:700; color:#111827;
+          font-size:1rem; margin-bottom:1.25rem;">
+    Who uses this
+</p>
+""", unsafe_allow_html=True)
+
+    uc1, uc2, uc3 = st.columns(3, gap="medium")
+    use_cases = [
+        ("🚀", "Indie hackers",
+         "Validate a niche before building. Find the real pain before writing a line of code."),
+        ("📊", "Product managers",
+         "Run competitive research in 30 seconds. See what users actually complain about."),
+        ("✍️", "Content creators",
+         "Find the exact questions people are asking. Write content that solves real problems."),
+    ]
+    for col, (icon, title, desc) in zip([uc1, uc2, uc3], use_cases):
+        with col:
+            st.markdown(f"""
+<div style="padding:1.25rem; background:#FFFFFF; border:1px solid #E5E7EB;
+            border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+    <div style="font-size:1.4rem; margin-bottom:0.5rem;">{icon}</div>
+    <p style="font-weight:700; color:#111827; font-size:0.9rem;
+              margin:0 0 0.35rem 0;">{title}</p>
+    <p style="color:#6B7280; font-size:0.82rem; margin:0; line-height:1.5;">{desc}</p>
+</div>
+""", unsafe_allow_html=True)
 # ============================================================
 # 8. API KEY WARNING
 # ============================================================
@@ -450,7 +553,11 @@ if not API_KEY:
 # ============================================================
 # 9. RATE LIMIT + EXECUTION
 # ============================================================
-if (scan_clicked or trigger_scan) and active_keyword and API_KEY:
+should_scan = scan_clicked or st.session_state.get("trigger_scan", False)
+active_keyword = st.session_state.get("keyword", "").strip()
+
+if should_scan and active_keyword and API_KEY:
+    st.session_state["trigger_scan"] = False
     elapsed = time.time() - st.session_state.last_scan_time
     if elapsed < COOLDOWN_SECONDS:
         remaining = int(COOLDOWN_SECONDS - elapsed)
@@ -460,13 +567,15 @@ if (scan_clicked or trigger_scan) and active_keyword and API_KEY:
         with st.spinner("Fetching Reddit posts and analyzing with Gemini…"):
             posts = fetch_reddit_posts(active_keyword)
             if posts:
-                results = analyse_pain_points(keyword, posts, API_KEY)
-                st.session_state.results         = sorted(
+                results = analyse_pain_points(active_keyword, posts, API_KEY)
+                st.session_state.results        = sorted(
                     results, key=lambda x: x.get("opportunity_score", 0), reverse=True
                 )
-                st.session_state.last_keyword    = active_keyword
-                st.session_state.last_scan_time  = time.time()
-                st.session_state.post_count      = len(posts)
+                st.session_state.last_keyword   = active_keyword
+                st.session_state.last_scan_time = time.time()
+                st.session_state.post_count     = len(posts)
+elif should_scan:
+    st.session_state["trigger_scan"] = False
 
 # ============================================================
 # 10. RESULTS

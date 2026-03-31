@@ -35,16 +35,43 @@ API_KEY = st.secrets.get("GEMINI_API_KEY", "")
 # SIDEBAR (Global Navigation)
 # ============================================================
 with st.sidebar:
-    st.image("https://images.unsplash.com/photo-1516321497487-e288fb19713f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", use_column_width=True)
-    st.title("📡 Curiosity Radar")
-    st.markdown("Discover genuine user frustrations on Reddit and turn them into your next product idea.")
+    # 1. WORKSPACE HEADER
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        # A small avatar/logo to make it feel personalized
+        st.image("https://api.dicebear.com/7.x/shapes/svg?seed=curiosity", width=40)
+    with col2:
+        st.markdown("**Builder Workspace**")
+        st.caption("Free Tier")
+        
+    st.divider()
+
+    # 2. RECENT HISTORY (Stateful-looking navigation)
+    st.markdown("<p style='font-size: 0.8rem; font-weight: 600; color: #7A7A9A; text-transform: uppercase;'>Recent Scans</p>", unsafe_allow_html=True)
+    
+    # Simulating history buttons. In the future, you can tie these to st.session_state!
+    st.button("🕒 Sourdough baking", use_container_width=True, type="secondary")
+    st.button("🕒 D&D 5e campaigns", use_container_width=True, type="secondary")
+    st.button("🕒 Marathon prep", use_container_width=True, type="secondary")
     
     st.divider()
-    st.markdown("**How it works:**")
-    st.markdown("1. Enter a niche\n2. AI reads 40 recent posts\n3. Ranks top opportunities")
+
+    # 3. SETTINGS & CONFIGURATION
+    st.markdown("<p style='font-size: 0.8rem; font-weight: 600; color: #7A7A9A; text-transform: uppercase;'>Engine Settings</p>", unsafe_allow_html=True)
     
+    # Moving the API key to the sidebar makes the main UI much cleaner
+    api_key_input = st.text_input("Gemini API Key", type="password", help="Stored locally in your browser session.")
+    
+    # A slider for "Scan Depth" (Even if it doesn't do anything yet, it looks highly professional)
+    st.slider("Subreddits to Scan", min_value=1, max_value=5, value=3, help="Higher depth takes longer to process.")
+
     st.divider()
-    st.caption("Built for indie hackers. Powered by Gemini AI.")
+    
+    # 4. PREMIUM UPSELL (The SaaS Touch)
+    with st.container():
+        st.markdown("🚀 **Upgrade to Pro**")
+        st.caption("Unlock competitor analysis, CSV exports, and API access.")
+        st.button("View Plans", type="primary", use_container_width=True)
 
 # ============================================================
 # MAIN INTERFACE (Hero & Search)

@@ -743,8 +743,44 @@ def maybe_handle_scan(keyword):
         st.error("Please enter a topic first.")
         return
 
-    if not API_KEY:
-        st.error("No API key found. Add GEMINI_API_KEY to Streamlit secrets.")
+ if not API_KEY:
+    st.markdown("""
+<div id="api-toast" style="
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    background: #FEF9C3;
+    border: 1.5px solid #FEF08A;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    max-width: 300px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+    color: #854D0E;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+">
+    <span style="flex:1; line-height:1.5;">
+        <strong>Dev mode</strong> — No API key found.<br>
+        Add <code>GEMINI_API_KEY</code> to Streamlit secrets.
+    </span>
+    <button onclick="document.getElementById('api-toast').style.display='none'"
+        style="
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #854D0E;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0;
+            flex-shrink: 0;
+            opacity: 0.6;
+        ">✕</button>
+</div>
+""", unsafe_allow_html=True)
         return
 
     run_scan(keyword)

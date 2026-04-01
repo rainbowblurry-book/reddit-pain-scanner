@@ -158,13 +158,27 @@ Posts:
     except Exception as e:
         error_str = str(e).lower()
         if any(x in error_str for x in ["429", "quota", "rate", "exhausted"]):
-            st.error(
-                "Gemini API daily limit reached. "
-                "This is a free tool with limited capacity — "
-                "please check back tomorrow. "
-                "If you have your own Gemini API key, "
-                "you can add it in the sidebar."
-            )
+            st.markdown("""
+<div style="
+    background: #FFF7ED;
+    border: 1.5px solid #FED7AA;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.88rem;
+    color: #7C2D12;
+    line-height: 1.6;
+">
+    <p style="font-weight:700; margin:0 0 0.25rem 0;">
+        Too many scans right now ⏳
+    </p>
+    <p style="margin:0; color:#9A3412;">
+        Curiosity Radar runs on a free AI tier with a limited number of
+        requests per minute. Wait about 60 seconds and try again —
+        your topic hasn't been lost.
+    </p>
+</div>
+""", unsafe_allow_html=True)
         else:
             st.error(f"Analysis failed: {e}")
         return []

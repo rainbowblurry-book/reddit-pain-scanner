@@ -700,7 +700,7 @@ def run_scan(keyword):
         return
 
     status = st.empty()
-    status.info(f"Scanning Reddit for \"{keyword}\"…")
+    status.info(f'Scanning Reddit for "{keyword}"…')
     posts = fetch_reddit_posts(keyword)
 
     if not posts:
@@ -755,7 +755,8 @@ def maybe_handle_scan(keyword):
 render_logo()
 render_daily_cap()
 
-has_results = bool(st.session_state.results)
+has_results = st.session_state.results is not None and len(st.session_state.results) > 0
+# has_results = st.session_state.results is not None
 
 # ============================================================
 # SEARCH UI
@@ -1043,6 +1044,4 @@ st.markdown("""
     Scores are AI estimates based on Reddit post analysis. Not statistically validated.
 </div>
 """, unsafe_allow_html=True)
-Cookie Policy
-We use cookies to enhance your experience. By clicking "Accept All Cookies" or selecting "Necessary Cookies", you agree to our privacy policy.
 

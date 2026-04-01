@@ -207,6 +207,18 @@ st.markdown("""
     .stTextInput > div > div > input:focus {
         border-color: #F97316 !important;
         box-shadow: 0 0 0 3px rgba(249,115,22,0.1) !important;
+        outline: none !important;
+    }
+
+    .stTextInput > div > div {
+        box-shadow: none !important;
+    }
+
+    [data-testid="stForm"] {
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        background: transparent !important;
     }
     .stTextInput > div > div > input::placeholder { color: #B8B0A4 !important; }
 

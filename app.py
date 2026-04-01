@@ -212,11 +212,29 @@ st.markdown("""
     }
 
     .example-card.demo {
-        background: #FFF8F1;
-        border: 1.5px solid #FED7AA;
-        box-shadow: 0 1px 6px rgba(249,115,22,0.06);
-    }
+    background: #F0F4FF;
+    border: 1.5px solid #C7D5F8;
+    box-shadow: 0 1px 6px rgba(79,108,249,0.06);
+}
 
+.example-card.demo .example-tag {
+    background: #4F6CF9;
+    color: #FFFFFF;
+    border: 1px solid #4F6CF9;
+}
+
+/* Blue solution box and text inside demo */
+.example-card.demo .solution-box {
+    background: #E8EEFF;
+    border-left: 3px solid #4F6CF9;
+}
+
+.example-card.demo .solution-label { color: #2D43B8; }
+.example-card.demo .top-opportunity { color: #2D43B8; }
+.example-card.demo .evidence {
+    border-left: 2px solid #C7D5F8;
+    color: #6B7AAA;
+}
     .example-tag {
         position: absolute;
         top: 0.85rem;
@@ -781,6 +799,7 @@ def run_scan(keyword):
         st.session_state.results = []
         st.session_state.last_keyword = keyword
         st.session_state.post_count = 0
+        st.rerun()
         return
 
     status.info(f"Analysing {len(posts)} posts with Gemini…")
@@ -799,6 +818,7 @@ def run_scan(keyword):
     st.session_state.last_keyword = keyword
     st.session_state.last_scan_time = time.time()
     st.session_state.post_count = len(posts)
+    st.rerun()
 
 def maybe_handle_scan(keyword):
     keyword = (keyword or "").strip()

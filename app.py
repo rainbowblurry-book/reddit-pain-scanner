@@ -742,9 +742,8 @@ def maybe_handle_scan(keyword):
     if not keyword:
         st.error("Please enter a topic first.")
         return
-
- if not API_KEY:
-    st.markdown("""
+if not API_KEY:
+        st.markdown("""
 <div id="api-toast" style="
     position: fixed;
     top: 1rem;
@@ -782,9 +781,7 @@ def maybe_handle_scan(keyword):
 </div>
 """, unsafe_allow_html=True)
         return
-
     run_scan(keyword)
-
 # ============================================================
 # PAGE TOP
 # ============================================================

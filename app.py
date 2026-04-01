@@ -947,8 +947,8 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<hr class="section-divider" style="margin:0 0 1.5rem 0;">', unsafe_allow_html=True)
-    render_example_card(after_results=False)
+    #st.markdown('<hr class="section-divider" style="margin:0 0 1.5rem 0;">', unsafe_allow_html=True)
+    #render_example_card(after_results=False)
 
 # ============================================================
 # EXECUTE SCAN
@@ -956,6 +956,10 @@ else:
 if scan_request is not None:
     maybe_handle_scan(scan_request)
 
+# Demo card on landing — renders AFTER scan status, never below it
+if not has_searched and scan_request is None:
+    st.markdown('<hr class="section-divider" style="margin:0 0 1.5rem 0;">', unsafe_allow_html=True)
+    render_example_card(after_results=False)
 # ============================================================
 # EMPTY STATE
 # ============================================================

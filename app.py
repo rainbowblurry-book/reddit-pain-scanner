@@ -782,7 +782,7 @@ if has_results:
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
 else:
-    # ── HERO SECTION ──
+    # ── HERO ──
     st.markdown("""
     <div class="hero-wrap">
         <h1 class="hero-title">Find what people actually want built</h1>
@@ -790,11 +790,45 @@ else:
             Enter any topic. Curiosity Radar scans Reddit for real frustrations
             and turns them into ranked, buildable app ideas.
         </p>
-        <span class="hero-badge">FREE TOOL FOR INDIE BUILDERS</span>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── How it works — lightweight numbered steps ──
+    # ── SEARCH BAR ──
+    with st.form("hero_search_form", clear_on_submit=False):
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            keyword_input = st.text_input(
+                "keyword",
+                placeholder="e.g. plant care, marathon training, language learning…",
+                label_visibility="collapsed",
+            )
+        with col2:
+            submitted = st.form_submit_button("Scan Reddit", use_container_width=True)
+
+    if submitted:
+        scan_request = keyword_input
+
+    # ── EXAMPLE TOPIC CHIPS ──
+    st.markdown(
+        '<p class="section-kicker">— or start with an example —</p>',
+        unsafe_allow_html=True,
+    )
+
+    row1 = st.columns(3, gap="small")
+    for col, (label, query) in zip(row1, EXAMPLE_QUERIES[:3]):
+        with col:
+            if st.button(label, key=f"ex_{query}", type="secondary", use_container_width=True):
+                scan_request = query
+
+    row2 = st.columns(3, gap="small")
+    for col, (label, query) in zip(row2, EXAMPLE_QUERIES[3:]):
+        with col:
+            if st.button(label, key=f"ex2_{query}", type="secondary", use_container_width=True):
+                scan_request = query
+
+    # ── HOW IT WORKS ──
+    st.markdown('<hr class="section-divider" style="margin:2rem 0 1.5rem 0;">', unsafe_allow_html=True)
+
     st.markdown("""
     <div class="steps-row">
         <div class="step-item">
@@ -815,9 +849,9 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
+    # ── EXAMPLE RESULT ──
+    st.markdown('<hr class="section-divider" style="margin:0 0 1.5rem 0;">', unsafe_allow_html=True)
 
-    # ── Example result preview ──
     st.markdown(
         '<p class="mini-heading">Here\'s what a real result looks like</p>'
         '<p class="mini-subheading">From the query <em>sourdough baking</em></p>',
@@ -852,45 +886,6 @@ else:
         </p>
     </div>
     """, unsafe_allow_html=True)
-
-    # ── Main CTA ──
-    st.markdown(
-        '<p class="cta-heading">Try it — takes about 15 seconds</p>'
-        '<p class="cta-sub">Enter a topic or pick one below.</p>',
-        unsafe_allow_html=True,
-    )
-
-    with st.form("hero_search_form", clear_on_submit=False):
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            keyword_input = st.text_input(
-                "keyword",
-                placeholder="e.g. plant care, DnD, marathon training…",
-                label_visibility="collapsed",
-            )
-        with col2:
-            submitted = st.form_submit_button("Scan Reddit", use_container_width=True)
-
-    if submitted:
-        scan_request = keyword_input
-
-    # ── Example topics — 2 rows of 3 ──
-    st.markdown(
-        '<p class="section-kicker">— or start with an example —</p>',
-        unsafe_allow_html=True,
-    )
-
-    row1 = st.columns(3, gap="small")
-    for col, (label, query) in zip(row1, EXAMPLE_QUERIES[:3]):
-        with col:
-            if st.button(label, key=f"ex_{query}", type="secondary", use_container_width=True):
-                scan_request = query
-
-    row2 = st.columns(3, gap="small")
-    for col, (label, query) in zip(row2, EXAMPLE_QUERIES[3:]):
-        with col:
-            if st.button(label, key=f"ex2_{query}", type="secondary", use_container_width=True):
-                scan_request = query
 
 # ============================================================
 # EXECUTE SCAN

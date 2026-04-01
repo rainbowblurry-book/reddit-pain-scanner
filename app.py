@@ -25,21 +25,24 @@ EMPTY_STATE_PATH = "assets/empty_state.png"
 # PAGE CONFIG
 # ============================================================
 st.set_page_config(
-    page_title="Curiosity Radar — Discover what to build",
+    page_title="Curiosity Radar — Find what people want built",
     page_icon="📡",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
 
 # ============================================================
-# STYLING
+# STYLING — fully rewritten for polish + mobile
 # ============================================================
 st.markdown("""
 <style>
+    /* ── Reset Streamlit chrome ── */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    [data-testid="stDecoration"] {display: none;}
 
+    /* ── Base ── */
     .stApp {
         background: #FFFEF9;
     }
@@ -51,11 +54,12 @@ st.markdown("""
         -webkit-font-smoothing: antialiased;
     }
 
+    /* ── Layout container ── */
     [data-testid="block-container"] {
-        max-width: 860px !important;
-        padding-top: 0.5rem !important;
-        padding-left: 1.35rem !important;
-        padding-right: 1.35rem !important;
+        max-width: 820px !important;
+        padding-top: 0 !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
         overflow-x: hidden !important;
     }
 
@@ -66,24 +70,52 @@ st.markdown("""
         }
     }
 
-    .logo-shell {
+    /* ── Logo ── */
+    .logo-row {
         display: flex;
         justify-content: center;
-        margin-top: 0.8rem;
-        margin-bottom: 1.15rem;
+        padding-top: 1.5rem;
+        margin-bottom: 1.75rem;
     }
 
-    .logo-card {
-        background: rgba(255,255,255,0.9);
-        border: 1px solid #F1E9DD;
-        border-radius: 18px;
-        box-shadow: 0 8px 24px rgba(26, 26, 46, 0.06);
-        padding: 0.8rem 1rem;
+    .logo-row img {
+        display: block;
+        height: 44px;
+        width: auto;
     }
 
+    @media (max-width: 768px) {
+        .logo-row {
+            padding-top: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        .logo-row img {
+            height: 36px;
+        }
+    }
+
+    /* ── Hero ── */
     .hero-wrap {
         text-align: center;
-        padding: 0.5rem 0 0.5rem 0;
+        padding: 0 0 1.5rem 0;
+    }
+
+    .hero-title {
+        margin: 0 0 0.75rem 0;
+        font-size: clamp(1.85rem, 5.5vw, 3rem);
+        line-height: 1.1;
+        letter-spacing: -0.035em;
+        font-weight: 800;
+        color: #17172F;
+        text-wrap: balance;
+    }
+
+    .hero-subtitle {
+        max-width: 560px;
+        margin: 0 auto 0.5rem auto;
+        color: #6B6B85;
+        font-size: 1.05rem;
+        line-height: 1.65;
     }
 
     .hero-badge {
@@ -91,149 +123,173 @@ st.markdown("""
         background: #FFF7ED;
         border: 1.5px solid #FED7AA;
         border-radius: 999px;
-        padding: 0.42rem 1rem;
-        margin-bottom: 1.15rem;
+        padding: 0.3rem 0.85rem;
+        margin-top: 0.65rem;
         color: #C2410C;
-        font-size: 0.78rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+    }
+
+    /* ── How-it-works steps (inline row) ── */
+    .steps-row {
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        align-items: flex-start;
+        margin: 1.5rem 0 2rem 0;
+        padding: 0 0.5rem;
+    }
+
+    .step-item {
+        flex: 1;
+        max-width: 200px;
+        text-align: center;
+    }
+
+    .step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #17172F;
+        color: #FFFFFF;
+        font-size: 0.72rem;
         font-weight: 800;
-        letter-spacing: 0.05em;
-    }
-
-    .hero-title {
-        margin: 0 0 0.85rem 0;
-        font-size: clamp(2.35rem, 6vw, 4.15rem);
-        line-height: 1.05;
-        letter-spacing: -0.045em;
-        font-weight: 850;
-        color: #17172F;
-        text-wrap: balance;
-    }
-
-    .hero-subtitle {
-        max-width: 650px;
-        margin: 0 auto 1.75rem auto;
-        color: #737390;
-        font-size: 1.08rem;
-        line-height: 1.7;
-    }
-
-    .section-kicker {
-        text-align: center;
-        color: #B8B0A4;
-        font-size: 0.82rem;
-        margin: 1rem 0 0.65rem 0;
-    }
-
-    .mini-heading {
-        text-align: center;
-        margin: 2rem 0 0.25rem 0;
-        font-weight: 800;
-        color: #1A1A2E;
-        font-size: 1rem;
-    }
-
-    .mini-subheading {
-        text-align: center;
-        margin: 0 0 1rem 0;
-        color: #B8B0A4;
-        font-size: 0.82rem;
-    }
-
-    .step-card {
-        background: #FFFFFF;
-        border: 1.5px solid #F0EBE3;
-        border-radius: 18px;
-        padding: 1.25rem 1rem;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        min-height: 175px;
-    }
-
-    .step-icon {
-        font-size: 1.7rem;
         margin-bottom: 0.5rem;
     }
 
-    .step-title {
-        margin: 0 0 0.35rem 0;
-        font-weight: 800;
+    .step-label {
+        margin: 0 0 0.2rem 0;
+        font-weight: 700;
         color: #1A1A2E;
-        font-size: 0.96rem;
+        font-size: 0.88rem;
     }
 
     .step-desc {
         margin: 0;
-        color: #7A7A9A;
-        font-size: 0.84rem;
-        line-height: 1.55;
+        color: #8A8A9F;
+        font-size: 0.8rem;
+        line-height: 1.5;
     }
 
+    @media (max-width: 768px) {
+        .steps-row {
+            gap: 1rem;
+            margin: 1rem 0 1.5rem 0;
+        }
+        .step-num {
+            width: 24px;
+            height: 24px;
+            font-size: 0.65rem;
+        }
+        .step-label {
+            font-size: 0.8rem;
+        }
+        .step-desc {
+            font-size: 0.72rem;
+        }
+    }
+
+    /* ── Divider ── */
+    .section-divider {
+        border: none;
+        border-top: 1px solid #EEEBE5;
+        margin: 0;
+    }
+
+    /* ── Section kicker ── */
+    .section-kicker {
+        text-align: center;
+        color: #B8B0A4;
+        font-size: 0.8rem;
+        margin: 1.5rem 0 0.75rem 0;
+    }
+
+    /* ── Mini heading ── */
+    .mini-heading {
+        text-align: center;
+        margin: 0 0 0.2rem 0;
+        font-weight: 700;
+        color: #1A1A2E;
+        font-size: 0.95rem;
+    }
+
+    .mini-subheading {
+        text-align: center;
+        margin: 0 0 0.85rem 0;
+        color: #B8B0A4;
+        font-size: 0.8rem;
+    }
+
+    /* ── Example card ── */
     .example-card {
         position: relative;
         background: #FFFFFF;
         border: 1.5px solid #F0EBE3;
-        border-radius: 18px;
-        padding: 1.7rem;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-        margin-top: 0.5rem;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
         margin-bottom: 2rem;
     }
 
     .example-tag {
         position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: #F5F0E8;
-        border: 1px solid #E8E4DC;
+        top: 0.85rem;
+        right: 0.85rem;
+        background: #F0EBE3;
+        border: 1px solid #E0DAD0;
         border-radius: 999px;
-        padding: 0.2rem 0.75rem;
-        font-size: 0.7rem;
+        padding: 0.18rem 0.6rem;
+        font-size: 0.62rem;
         font-weight: 800;
-        color: #B8B0A4;
-        letter-spacing: 0.05em;
+        color: #9A9484;
+        letter-spacing: 0.06em;
     }
 
     .top-opportunity {
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         font-weight: 800;
         color: #C2410C;
         letter-spacing: 0.06em;
-        margin: 0 0 0.4rem 0;
+        margin: 0 0 0.35rem 0;
     }
 
     .example-title {
-        margin: 0 0 0.6rem 0;
+        margin: 0 0 0.5rem 0;
         color: #1A1A2E;
-        font-size: 1.3rem;
-        line-height: 1.28;
-        font-weight: 850;
+        font-size: 1.15rem;
+        line-height: 1.3;
+        font-weight: 800;
     }
 
     .example-desc {
-        margin: 0 0 1rem 0;
+        margin: 0 0 0.85rem 0;
         color: #4A4A6A;
-        font-size: 0.96rem;
-        line-height: 1.65;
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
 
     .metric-row {
         display: flex;
-        gap: 0.55rem;
+        gap: 0.45rem;
         flex-wrap: wrap;
-        margin-bottom: 1rem;
+        margin-bottom: 0.85rem;
     }
 
     .solution-box {
         background: #FFF7ED;
-        border-left: 4px solid #F97316;
-        border-radius: 0 12px 12px 0;
-        padding: 1rem 1.1rem;
-        margin-bottom: 1rem;
+        border-left: 3px solid #F97316;
+        border-radius: 0 10px 10px 0;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.85rem;
     }
 
     .solution-label {
-        margin: 0 0 0.28rem 0;
-        font-size: 0.72rem;
+        margin: 0 0 0.2rem 0;
+        font-size: 0.68rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         font-weight: 800;
@@ -244,102 +300,130 @@ st.markdown("""
         margin: 0;
         color: #1A1A2E;
         font-weight: 650;
-        font-size: 0.96rem;
-        line-height: 1.55;
+        font-size: 0.9rem;
+        line-height: 1.5;
     }
 
     .evidence {
         margin: 0;
-        font-size: 0.87rem;
+        font-size: 0.82rem;
         color: #7A7A9A;
         font-style: italic;
-        line-height: 1.6;
+        line-height: 1.55;
         padding-left: 0.75rem;
         border-left: 2px solid #E8E4DC;
     }
 
+    /* ── CTA section ── */
+    .cta-heading {
+        text-align: center;
+        margin: 0 0 0.15rem 0;
+        font-weight: 700;
+        color: #1A1A2E;
+        font-size: 1.05rem;
+    }
+
+    .cta-sub {
+        text-align: center;
+        margin: 0 0 0.75rem 0;
+        color: #B8B0A4;
+        font-size: 0.8rem;
+    }
+
+    /* ── Cap banner ── */
     .cap-banner {
         background: #FEF9C3;
         border: 1.5px solid #FEF08A;
-        border-radius: 12px;
-        padding: 0.8rem 1rem;
-        font-size: 0.9rem;
+        border-radius: 10px;
+        padding: 0.65rem 1rem;
+        font-size: 0.85rem;
         color: #854D0E;
         margin-bottom: 1rem;
         text-align: center;
     }
 
+    /* ── Footer ── */
     .subtle-footer {
         text-align: center;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         color: #C4BDB5;
-        margin-top: 3.75rem;
-        padding-bottom: 2rem;
-        line-height: 1.8;
+        margin-top: 3rem;
+        padding: 1rem 0 2rem 0;
+        border-top: 1px solid #F0EBE3;
+        line-height: 1.7;
     }
 
+    /* ── Form inputs ── */
     .stTextInput > div > div > input {
-        border-radius: 14px !important;
+        border-radius: 12px !important;
         border: 1.5px solid #E8E4DC !important;
-        padding: 0.95rem 1.15rem !important;
-        font-size: 1.02rem !important;
+        padding: 0.85rem 1rem !important;
+        font-size: 0.95rem !important;
         background-color: #FFFFFF !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.03) !important;
+        height: 48px !important;
+        box-sizing: border-box !important;
     }
 
     .stTextInput > div > div > input:focus {
         border-color: #F97316 !important;
-        box-shadow: 0 0 0 3px rgba(249,115,22,0.12) !important;
+        box-shadow: 0 0 0 3px rgba(249,115,22,0.1) !important;
     }
 
     .stTextInput > div > div > input::placeholder {
         color: #B8B0A4 !important;
     }
 
+    /* ── Primary button (Scan) ── */
     .stButton > button[kind="primary"],
     .stFormSubmitButton > button {
         background: linear-gradient(135deg, #F97316, #EA580C) !important;
         color: #FFFFFF !important;
-        border-radius: 14px !important;
+        border-radius: 12px !important;
         border: none !important;
-        font-weight: 800 !important;
-        padding: 0.9rem 1rem !important;
-        font-size: 1rem !important;
-        box-shadow: 0 6px 16px rgba(249,115,22,0.24) !important;
-        transition: all 0.18s ease !important;
+        font-weight: 700 !important;
+        padding: 0 1.2rem !important;
+        font-size: 0.92rem !important;
+        height: 48px !important;
+        box-shadow: 0 4px 12px rgba(249,115,22,0.2) !important;
+        transition: all 0.15s ease !important;
     }
 
     .stButton > button[kind="primary"]:hover,
     .stFormSubmitButton > button:hover {
         transform: translateY(-1px) !important;
-        box-shadow: 0 8px 20px rgba(249,115,22,0.30) !important;
+        box-shadow: 0 6px 16px rgba(249,115,22,0.28) !important;
     }
 
+    /* ── Secondary button (example topics) ── */
     .stButton > button[kind="secondary"] {
         background: #17172F !important;
         color: #FFFFFF !important;
-        border-radius: 14px !important;
+        border-radius: 10px !important;
         border: none !important;
-        font-weight: 700 !important;
-        padding: 0.85rem 0.8rem !important;
-        line-height: 1.2 !important;
-        white-space: normal !important;
-        min-height: 56px !important;
-        transition: all 0.15s ease !important;
+        font-weight: 600 !important;
+        padding: 0.6rem 0.75rem !important;
+        font-size: 0.85rem !important;
+        line-height: 1.3 !important;
+        white-space: nowrap !important;
+        min-height: 44px !important;
+        transition: all 0.12s ease !important;
     }
 
     .stButton > button[kind="secondary"]:hover {
-        background: #222244 !important;
+        background: #2A2A48 !important;
         transform: translateY(-1px) !important;
     }
 
+    /* ── Download button ── */
     .stDownloadButton > button {
         background: #FFFFFF !important;
         color: #4A4A6A !important;
         border: 1.5px solid #E8E4DC !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         font-weight: 600 !important;
-        padding: 0.8rem 1rem !important;
+        padding: 0.7rem 1rem !important;
+        font-size: 0.88rem !important;
     }
 
     .stDownloadButton > button:hover {
@@ -347,13 +431,14 @@ st.markdown("""
         color: #F97316 !important;
     }
 
+    /* ── Results table ── */
     .results-table-wrap {
         border: 1.5px solid #F0EBE3;
-        border-radius: 14px;
+        border-radius: 12px;
         overflow: hidden;
         background: #FFFFFF;
         margin-bottom: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        box-shadow: 0 1px 6px rgba(0,0,0,0.03);
     }
 
     .results-table {
@@ -367,8 +452,8 @@ st.markdown("""
     }
 
     .results-table th {
-        padding: 0.65rem 1rem;
-        font-size: 0.7rem;
+        padding: 0.6rem 0.85rem;
+        font-size: 0.68rem;
         color: #B8B0A4;
         text-transform: uppercase;
         letter-spacing: 0.07em;
@@ -382,96 +467,74 @@ st.markdown("""
     }
 
     .results-table td {
-        padding: 0.7rem 1rem;
+        padding: 0.65rem 0.85rem;
         border-bottom: 1px solid #F5F0E8;
         vertical-align: middle;
-        font-size: 0.88rem;
+        font-size: 0.85rem;
     }
 
+    /* ── Pain point cards (results) ── */
     .pain-card {
         background: #FFFFFF;
         border: 1.5px solid #F0EBE3;
-        border-radius: 18px;
-        padding: 1.6rem;
-        margin-bottom: 1.2rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.03);
     }
 
     .pain-card.top-pick {
         background: #FFFEF9;
-        position: relative;
-        z-index: 0;
-        border: none;
-    }
-
-    .pain-card.top-pick::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: 18px;
-        padding: 2px;
-        background: linear-gradient(135deg, #F97316, #8B5CF6, #F97316, #8B5CF6);
-        background-size: 300% 300%;
-        animation: borderSpin 4s ease infinite;
-        -webkit-mask:
-            linear-gradient(#fff 0 0) content-box,
-            linear-gradient(#fff 0 0);
-        -webkit-mask-composite: destination-out;
-        mask-composite: exclude;
-        z-index: -1;
-    }
-
-    @keyframes borderSpin {
-        0%   { background-position: 0% 50%; }
-        50%  { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+        border: 2px solid #F97316;
     }
 
     .rank-label {
-        margin: 0 0 0.4rem 0;
-        font-size: 0.72rem;
+        margin: 0 0 0.35rem 0;
+        font-size: 0.68rem;
         font-weight: 800;
         color: #C2410C;
         letter-spacing: 0.06em;
     }
 
     .card-title {
-        margin: 0 0 0.55rem 0;
-        font-size: 1.35rem;
-        font-weight: 850;
+        margin: 0 0 0.45rem 0;
+        font-size: 1.2rem;
+        font-weight: 800;
         color: #1A1A2E;
-        line-height: 1.28;
+        line-height: 1.3;
     }
 
     .card-desc {
-        margin: 0 0 1rem 0;
+        margin: 0 0 0.85rem 0;
         color: #4A4A6A;
-        font-size: 0.97rem;
-        line-height: 1.65;
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
 
+    /* ── Results header ── */
     .results-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 1rem;
-        margin: 1.5rem 0 1rem 0;
+        margin: 1.25rem 0 0.85rem 0;
         flex-wrap: wrap;
     }
 
     .results-left {
         color: #7A7A9A;
         font-weight: 700;
-        font-size: 0.96rem;
+        font-size: 0.92rem;
         margin: 0;
     }
 
     .results-right {
         color: #B8B0A4;
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         margin: 0;
     }
 
+    /* ── Empty state ── */
     .empty-state-copy {
         text-align: center;
         padding: 1rem 0;
@@ -481,14 +544,25 @@ st.markdown("""
         font-weight: 800;
         color: #1A1A2E;
         font-size: 1rem;
-        margin: 0 0 0.35rem 0;
+        margin: 0 0 0.3rem 0;
     }
 
     .empty-state-copy .desc {
         color: #7A7A9A;
-        font-size: 0.92rem;
+        font-size: 0.88rem;
         margin: 0;
         line-height: 1.6;
+    }
+
+    /* ── Responsive table: scroll on mobile ── */
+    @media (max-width: 768px) {
+        .results-table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .results-table {
+            min-width: 580px;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -513,12 +587,12 @@ API_KEY = st.secrets.get("GEMINI_API_KEY", "")
 COOLDOWN_SECONDS = 30
 
 EXAMPLE_QUERIES = [
-    ("🥖 Sourdough", "sourdough baking"),
-    ("🏃 Marathon", "marathon training"),
-    ("💻 Remote work", "remote work"),
-    ("🗣️ Language", "language learning"),
-    ("😴 Sleep", "sleep tracking"),
-    ("💸 Finance", "personal finance"),
+    ("Sourdough", "sourdough baking"),
+    ("Marathon", "marathon training"),
+    ("Remote work", "remote work"),
+    ("Language", "language learning"),
+    ("Sleep", "sleep tracking"),
+    ("Finance", "personal finance"),
 ]
 
 # ============================================================
@@ -544,11 +618,12 @@ def score_pill_html(label, score, invert=False):
     bg, fg, border = pill_bucket(score, invert)
     return (
         f'<span style="background:{bg};color:{fg};border:1.5px solid {border};'
-        f'border-radius:999px;padding:0.3rem 0.8rem;font-size:0.8rem;'
-        f'font-weight:800;">{safe(label)} {safe(score)}/10</span>'
+        f'border-radius:999px;padding:0.25rem 0.65rem;font-size:0.75rem;'
+        f'font-weight:700;white-space:nowrap;">{safe(label)} {safe(score)}/10</span>'
     )
 
 def crop_logo_to_b64(path):
+    """Crop whitespace from logo and encode as base64 PNG."""
     img = Image.open(path).convert("RGBA")
 
     alpha = img.getchannel("A")
@@ -565,12 +640,10 @@ def crop_logo_to_b64(path):
     if bbox:
         img = img.crop(bbox)
 
-    max_w, max_h = 280, 88
-    scale = min(max_w / max(img.width, 1), max_h / max(img.height, 1))
-    new_size = (
-        max(1, int(img.width * scale)),
-        max(1, int(img.height * scale)),
-    )
+    # Resize to a fixed height for consistency
+    target_h = 88
+    scale = target_h / max(img.height, 1)
+    new_size = (max(1, int(img.width * scale)), target_h)
     img = img.resize(new_size, Image.LANCZOS)
 
     buffer = BytesIO()
@@ -578,28 +651,29 @@ def crop_logo_to_b64(path):
     return base64.b64encode(buffer.getvalue()).decode()
 
 def render_logo():
+    """Render logo as a clean centered image — no card wrapper."""
     if os.path.exists(LOGO_PATH):
         try:
             logo_b64 = crop_logo_to_b64(LOGO_PATH)
             st.markdown(
                 f"""
-                <div class="logo-shell">
-                    <div class="logo-card">
-                        <img src="data:image/png;base64,{logo_b64}"
-                             alt="Curiosity Radar logo"
-                             style="display:block;margin:auto;max-width:280px;width:100%;height:auto;">
-                    </div>
+                <div class="logo-row">
+                    <img src="data:image/png;base64,{logo_b64}"
+                         alt="Curiosity Radar">
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
         except Exception:
-            _, c, _ = st.columns([1.2, 1, 1.2])
-            with c:
-                st.image(LOGO_PATH, width=220)
+            st.markdown(
+                '<div class="logo-row" style="font-size:1.3rem;font-weight:800;color:#17172F;">'
+                '📡 Curiosity Radar</div>',
+                unsafe_allow_html=True,
+            )
     else:
         st.markdown(
-            '<div style="text-align:center;font-size:2rem;margin-top:1rem;margin-bottom:0.5rem;">📡</div>',
+            '<div class="logo-row" style="font-size:1.3rem;font-weight:800;color:#17172F;">'
+            '📡 Curiosity Radar</div>',
             unsafe_allow_html=True,
         )
 
@@ -608,13 +682,13 @@ def render_daily_cap():
     if is_daily_cap_reached():
         st.markdown("""
         <div class="cap-banner">
-            ⚠️ Daily scan limit reached — this free tool has limited capacity.
+            Daily scan limit reached — this free tool has limited capacity.
             Check back tomorrow, or add your own Gemini API key below.
         </div>
         """, unsafe_allow_html=True)
     elif remaining <= 30:
         st.markdown(
-            f'<div class="cap-banner">⚡ {remaining} free scans remaining today.</div>',
+            f'<div class="cap-banner">{remaining} free scans remaining today.</div>',
             unsafe_allow_html=True,
         )
 
@@ -626,7 +700,7 @@ def run_scan(keyword):
         return
 
     status = st.empty()
-    status.info(f"📡 Scanning Reddit for '{keyword}'…")
+    status.info(f"Scanning Reddit for \"{keyword}\"…")
     posts = fetch_reddit_posts(keyword)
 
     if not posts:
@@ -636,7 +710,7 @@ def run_scan(keyword):
         st.session_state.post_count = 0
         return
 
-    status.info(f"🤖 Analysing {len(posts)} posts with Gemini…")
+    status.info(f"Analysing {len(posts)} posts with Gemini…")
     results = analyse_pain_points(keyword, posts, API_KEY)
     status.empty()
 
@@ -676,7 +750,7 @@ def maybe_handle_scan(keyword):
     run_scan(keyword)
 
 # ============================================================
-# TOP
+# PAGE TOP
 # ============================================================
 render_logo()
 render_daily_cap()
@@ -689,6 +763,7 @@ has_results = bool(st.session_state.results)
 scan_request = None
 
 if has_results:
+    # ── Compact search bar when results are showing ──
     with st.form("top_search_form", clear_on_submit=True):
         col1, col2 = st.columns([3, 1])
         with col1:
@@ -703,43 +778,45 @@ if has_results:
     if submitted:
         scan_request = keyword_input
 
-    st.markdown(
-        '<hr style="border:none;border-top:1px solid #F0EBE3;margin:0.8rem 0 0.25rem 0;">',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
 else:
+    # ── HERO SECTION ──
     st.markdown("""
     <div class="hero-wrap">
-        <div class="hero-badge">FREE TOOL FOR INDIE BUILDERS</div>
         <h1 class="hero-title">Find what people actually want built</h1>
         <p class="hero-subtitle">
-            Type any topic. Curiosity Radar scans Reddit for real frustrations
+            Enter any topic. Curiosity Radar scans Reddit for real frustrations
             and turns them into ranked, buildable app ideas.
         </p>
+        <span class="hero-badge">FREE TOOL FOR INDIE BUILDERS</span>
     </div>
     """, unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns(3, gap="medium")
-    steps = [
-        ("🔍", "Enter any topic", "A hobby, niche, or industry. Anything people complain about."),
-        ("📡", "We scan Reddit", "40 real posts from the past year, stripped of noise."),
-        ("💡", "Gemini ranks the gaps", "Pain points scored by demand, difficulty, and opportunity."),
-    ]
+    # ── How it works — lightweight numbered steps ──
+    st.markdown("""
+    <div class="steps-row">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <p class="step-label">Enter a topic</p>
+            <p class="step-desc">A hobby, niche, or industry.</p>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <p class="step-label">Reddit is scanned</p>
+            <p class="step-desc">40 posts from the past year.</p>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <p class="step-label">AI ranks the gaps</p>
+            <p class="step-desc">Pain points scored by opportunity.</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    for col, (icon, title, desc) in zip([c1, c2, c3], steps):
-        with col:
-            st.markdown(
-                f"""
-                <div class="step-card">
-                    <div class="step-icon">{icon}</div>
-                    <p class="step-title">{safe(title)}</p>
-                    <p class="step-desc">{safe(desc)}</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
+    # ── Example result preview ──
     st.markdown(
         '<p class="mini-heading">Here\'s what a real result looks like</p>'
         '<p class="mini-subheading">From the query <em>sourdough baking</em></p>',
@@ -749,7 +826,7 @@ else:
     st.markdown(f"""
     <div class="example-card">
         <div class="example-tag">EXAMPLE</div>
-        <p class="top-opportunity">✨ TOP OPPORTUNITY</p>
+        <p class="top-opportunity">TOP OPPORTUNITY</p>
         <h3 class="example-title">No structured beginner learning path</h3>
         <p class="example-desc">
             New bakers feel overwhelmed by conflicting advice across forums,
@@ -775,9 +852,10 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Main CTA ──
     st.markdown(
-        '<p class="mini-heading">Ready to find your niche? 👇</p>'
-        '<p class="mini-subheading">Takes about 15 seconds.</p>',
+        '<p class="cta-heading">Try it — takes about 15 seconds</p>'
+        '<p class="cta-sub">Enter a topic or pick one below.</p>',
         unsafe_allow_html=True,
     )
 
@@ -795,24 +873,22 @@ else:
     if submitted:
         scan_request = keyword_input
 
+    # ── Example topics — 2 rows of 3 ──
     st.markdown(
         '<p class="section-kicker">— or start with an example —</p>',
         unsafe_allow_html=True,
     )
 
-    top_row = EXAMPLE_QUERIES[:3]
-    bottom_row = EXAMPLE_QUERIES[3:]
-
     row1 = st.columns(3, gap="small")
-    for col, (label, query) in zip(row1, top_row):
+    for col, (label, query) in zip(row1, EXAMPLE_QUERIES[:3]):
         with col:
-            if st.button(label, key=f"example_{query}", type="secondary", use_container_width=True):
+            if st.button(label, key=f"ex_{query}", type="secondary", use_container_width=True):
                 scan_request = query
 
     row2 = st.columns(3, gap="small")
-    for col, (label, query) in zip(row2, bottom_row):
+    for col, (label, query) in zip(row2, EXAMPLE_QUERIES[3:]):
         with col:
-            if st.button(label, key=f"example2_{query}", type="secondary", use_container_width=True):
+            if st.button(label, key=f"ex2_{query}", type="secondary", use_container_width=True):
                 scan_request = query
 
 # ============================================================
@@ -822,7 +898,7 @@ if scan_request is not None:
     maybe_handle_scan(scan_request)
 
 # ============================================================
-# RESULTS
+# EMPTY STATE
 # ============================================================
 if st.session_state.results is not None and len(st.session_state.results) == 0:
     if os.path.exists(EMPTY_STATE_PATH):
@@ -840,6 +916,9 @@ if st.session_state.results is not None and len(st.session_state.results) == 0:
     </div>
     """, unsafe_allow_html=True)
 
+# ============================================================
+# RESULTS
+# ============================================================
 if st.session_state.results:
     results = st.session_state.results
     kw = st.session_state.last_keyword
@@ -851,12 +930,13 @@ if st.session_state.results:
             <p class="results-left">
                 Top opportunities for <strong style="color:#1A1A2E;">{safe(kw)}</strong>
             </p>
-            <p class="results-right">{safe(post_count)} posts · AI-estimated</p>
+            <p class="results-right">{safe(post_count)} posts analysed · AI-estimated scores</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+    # ── Summary table ──
     rows_html = ""
     for i, item in enumerate(results):
         is_top = i == 0
@@ -896,6 +976,7 @@ if st.session_state.results:
         unsafe_allow_html=True,
     )
 
+    # ── CSV download ──
     df = pd.DataFrame(results)
     csv = df.to_csv(index=False)
     st.download_button(
@@ -905,14 +986,12 @@ if st.session_state.results:
         mime="text/csv",
     )
 
-    st.markdown(
-        '<hr style="border:none;border-top:1px solid #F0EBE3;margin:2rem 0;">',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<hr class="section-divider" style="margin:1.5rem 0;">', unsafe_allow_html=True)
 
+    # ── Detailed cards ──
     for i, item in enumerate(results):
         is_top = i == 0
-        badge = "✨ TOP OPPORTUNITY" if is_top else f"#{i+1}"
+        badge = "TOP OPPORTUNITY" if is_top else f"#{i+1}"
         card_class = "pain-card top-pick" if is_top else "pain-card"
 
         metrics_html = (
@@ -945,10 +1024,11 @@ if st.session_state.results:
                 unsafe_allow_html=True,
             )
 
-    st.markdown("<div style='height:0.4rem'></div>", unsafe_allow_html=True)
+    # ── New search button ──
+    st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
     _, mid, _ = st.columns([1, 1.4, 1])
     with mid:
-        if st.button("New Search", type="secondary", use_container_width=True):
+        if st.button("New search", type="secondary", use_container_width=True):
             st.session_state.results = None
             st.session_state.last_keyword = ""
             st.session_state.post_count = 0
@@ -959,10 +1039,10 @@ if st.session_state.results:
 # ============================================================
 st.markdown("""
 <div class="subtle-footer">
-    📡 Curiosity Radar · Built by BlurryRainbow · Powered by Gemini AI<br>
-    <span style="opacity:0.7;">
-        Scores are AI estimates based on Reddit post analysis.
-        Not statistically validated.
-    </span>
+    Curiosity Radar · Built by BlurryRainbow · Powered by Gemini AI<br>
+    Scores are AI estimates based on Reddit post analysis. Not statistically validated.
 </div>
 """, unsafe_allow_html=True)
+Cookie Policy
+We use cookies to enhance your experience. By clicking "Accept All Cookies" or selecting "Necessary Cookies", you agree to our privacy policy.
+

@@ -1,0 +1,19 @@
+name: Keep Alive
+on:
+  schedule:
+    - cron: '0 */10 * * *'   # every 10 hours
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Empty commit
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git commit --allow-empty -m "keepalive"
+          git push
